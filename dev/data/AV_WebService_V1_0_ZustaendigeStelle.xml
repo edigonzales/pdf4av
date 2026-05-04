@@ -27,13 +27,13 @@
 	<ili:datasection>
 		<AV_WebService_V1_0:Konfiguration ili:bid="b1">
 
-			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o2498">
-				<AV_WebService_V1_0:NBIdent>SO0200002498</AV_WebService_V1_0:NBIdent>
-				<AV_WebService_V1_0:AV>https://www.agi.so.ch</AV_WebService_V1_0:AV>
+			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o108">
+				<AV_WebService_V1_0:NBIdent>BE0200000108</AV_WebService_V1_0:NBIdent>
+				<AV_WebService_V1_0:AV>https://nfg.gonzales.com</AV_WebService_V1_0:AV>
 			</AV_WebService_V1_0:ZustaendigeStelle>
-			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o2500">
-				<AV_WebService_V1_0:NBIdent>SO0200002500</AV_WebService_V1_0:NBIdent>
-				<AV_WebService_V1_0:AV>https://www.agi.so.ch</AV_WebService_V1_0:AV>
+			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o115">
+				<AV_WebService_V1_0:NBIdent>BE0200000115</AV_WebService_V1_0:NBIdent>
+				<AV_WebService_V1_0:AV>Geometerbüro Qwertz</AV_WebService_V1_0:AV>
 			</AV_WebService_V1_0:ZustaendigeStelle>
 		
           </AV_WebService_V1_0:Konfiguration>

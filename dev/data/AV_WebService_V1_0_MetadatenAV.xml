@@ -26,13 +26,13 @@
 	</ili:headersection>
 	<ili:datasection>
 		<AV_WebService_V1_0:Konfiguration ili:bid="b1">
-			<AV_WebService_V1_0:MetadatenAV ili:tid="o1">
-				<AV_WebService_V1_0:NBIdent>SO0200002498</AV_WebService_V1_0:NBIdent>
-				<AV_WebService_V1_0:Stand>2019-07-15T00:00:00.000</AV_WebService_V1_0:Stand>
+			<AV_WebService_V1_0:MetadatenAV ili:tid="o3">
+				<AV_WebService_V1_0:NBIdent>BE0200000108</AV_WebService_V1_0:NBIdent>
+				<AV_WebService_V1_0:Stand>2025-09-01T00:00:00.000</AV_WebService_V1_0:Stand>
 			</AV_WebService_V1_0:MetadatenAV>
-			<AV_WebService_V1_0:MetadatenAV ili:tid="o2">
-				<AV_WebService_V1_0:NBIdent>SO0200002500</AV_WebService_V1_0:NBIdent>
-				<AV_WebService_V1_0:Stand>2019-07-15T00:00:00.000</AV_WebService_V1_0:Stand>
+			<AV_WebService_V1_0:MetadatenAV ili:tid="o4">
+				<AV_WebService_V1_0:NBIdent>BE0200000115</AV_WebService_V1_0:NBIdent>
+				<AV_WebService_V1_0:Stand>2026-01-28T00:00:00.000</AV_WebService_V1_0:Stand>
 			</AV_WebService_V1_0:MetadatenAV>
           </AV_WebService_V1_0:Konfiguration>
 	</ili:datasection>

@@ -1,0 +1,46 @@
+plugins {
+    id 'application'
+    id 'maven-publish'
+}
+
+dependencies {
+    implementation project(':lib')
+    implementation 'info.picocli:picocli:4.7.7'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'ch.so.agi.av.webservice.Pdf4AvCli'
+    applicationName = 'pdf4av-app'
+}
+
+run {
+    //args = ['--xml', 'src/test/resources/input.xml', '--out', '/tmp/pdf4av']
+    //args = ['--xml', '/path/to/input.xml', '--out', '/path/to/out', '--fo']
+}
+
+tasks.named('distZip', Zip) {
+    archiveFileName = "pdf4av-app-${project.version}-bindist.zip"
+}
+
+tasks.named('distTar', Tar) {
+    enabled = false
+}
+
+tasks.named('jar', Jar) {
+    archiveBaseName = 'pdf4av-app'
+}
+
+publishing {
+    publications {
+        bindist(MavenPublication) {
+            artifactId = 'pdf4av-app'
+            artifact(tasks.named('distZip')) {
+                classifier = 'bindist'
+                extension = 'zip'
+            }
+        }
+    }
+}

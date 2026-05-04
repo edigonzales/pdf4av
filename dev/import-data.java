@@ -70,9 +70,10 @@ class import_data {
         items.put("logo-ch-pi", new ImportItem("logo-ch-pi", "AV_WebService_V1_0_Logo-ch.pi", "AV_WebService_V1_0_Logo-ch.pi.xml"));
         items.put("logo-ch", new ImportItem("logo-ch", "AV_WebService_V1_0_Logo-ch", "AV_WebService_V1_0_Logo-ch.xml"));
         items.put("logo-ch-so", new ImportItem("logo-ch-so", "AV_WebService_V1_0_Logo-ch.SO", "AV_WebService_V1_0_Logo-ch.SO.xml"));
-        items.put("logo-ch-2498", new ImportItem("logo-ch-2498", "AV_WebService_V1_0_Logo-ch.2498", "AV_WebService_V1_0_Logo-ch.2498.xml"));
-        items.put("logo-ch-2500", new ImportItem("logo-ch-2500", "AV_WebService_V1_0_Logo-ch.2500", "AV_WebService_V1_0_Logo-ch.2500.xml"));
-        items.put("logo-ch-2502", new ImportItem("logo-ch-2502", "AV_WebService_V1_0_Logo-ch.2502", "AV_WebService_V1_0_Logo-ch.2502.xml"));
+        items.put("logo-ch-449", new ImportItem("logo-ch-449", "AV_WebService_V1_0_Logo-ch.449", "AV_WebService_V1_0_Logo-ch.449.xml"));
+        // items.put("logo-ch-2498", new ImportItem("logo-ch-2498", "AV_WebService_V1_0_Logo-ch.2498", "AV_WebService_V1_0_Logo-ch.2498.xml"));
+        // items.put("logo-ch-2500", new ImportItem("logo-ch-2500", "AV_WebService_V1_0_Logo-ch.2500", "AV_WebService_V1_0_Logo-ch.2500.xml"));
+        // items.put("logo-ch-2502", new ImportItem("logo-ch-2502", "AV_WebService_V1_0_Logo-ch.2502", "AV_WebService_V1_0_Logo-ch.2502.xml"));
 
         switch (command) {
             case "list" -> printList(items);
@@ -223,9 +224,10 @@ class import_data {
             case "logo-ch-pi" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.pi.xml");
             case "logo-ch" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.xml");
             case "logo-ch-so" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.SO.xml");
-            case "logo-ch-2498" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2498.xml");
-            case "logo-ch-2500" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2500.xml");
-            case "logo-ch-2502" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2502.xml");
+            case "logo-ch-449" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.449.xml");
+            // case "logo-ch-2498" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2498.xml");
+            // case "logo-ch-2500" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2500.xml");
+            // case "logo-ch-2502" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2502.xml");
             default -> throw new IllegalArgumentException("Unhandled dataset key: " + key);
         };
     }
@@ -273,7 +275,7 @@ class import_data {
             throw new IllegalStateException("Data file not found: " + dataFile);
         }
 
-        EhiLogger.getInstance().setTraceFilter(false);
+        //EhiLogger.getInstance().setTraceFilter(false);
 
         try (Connection connection = DriverManager.getConnection(db.jdbcUrl(), db.user(), db.password())) {
             connection.setAutoCommit(false);
@@ -288,6 +290,7 @@ class import_data {
                 config.setItfTransferfile(true);
             }
 
+            config.setBatchSize(Integer.parseInt("5000"));
             config.setFunction(Config.FC_REPLACE);
             config.setDatasetName(datasetName);
             config.setImportTid(true);

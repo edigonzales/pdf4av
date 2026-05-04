@@ -27,8 +27,8 @@
 	<ili:datasection>
 		<AV_WebService_V1_0:Konfiguration ili:bid="b1">
 
-			<AV_WebService_V1_0:Logo ili:tid="ch.2500">
-				<AV_WebService_V1_0:Code>ch.2500</AV_WebService_V1_0:Code>
+			<AV_WebService_V1_0:Logo ili:tid="ch.449">
+				<AV_WebService_V1_0:Code>ch.449</AV_WebService_V1_0:Code>
 				<AV_WebService_V1_0:Bild>
           <LocalisationCH_V2:MultilingualBlob>
             <Localisation_V2:LocalisedBlob>

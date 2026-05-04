@@ -1,0 +1,63 @@
+ext {
+    mavenSnapshotUrl = 'https://jars.sogeo.services/snapshots'
+    mavenUsername = providers.gradleProperty('mavenUsername')
+        .orElse(providers.environmentVariable('MAVEN_USERNAME'))
+    mavenPassword = providers.gradleProperty('mavenPassword')
+        .orElse(providers.environmentVariable('MAVEN_PASSWORD'))
+}
+
+allprojects {
+    group = 'ch.so.agi'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    configurations {
+        all*.exclude group: 'xml-apis'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    pluginManager.withPlugin('maven-publish') {
+        publishing {
+            repositories {
+                maven {
+                    name = 'sogeoSnapshots'
+                    url = uri(mavenSnapshotUrl)
+                    credentials(PasswordCredentials) {
+                        username = mavenUsername.orNull
+                        password = mavenPassword.orNull
+                    }
+                }
+            }
+        }
+
+        tasks.withType(PublishToMavenRepository).configureEach {
+            doFirst {
+                if (repository?.name == 'sogeoSnapshots') {
+                    if (!mavenUsername.present || !mavenPassword.present) {
+                        throw new GradleException('Missing Maven credentials. Set mavenUsername/mavenPassword or MAVEN_USERNAME/MAVEN_PASSWORD.')
+                    }
+                }
+            }
+        }
+    }
+}
