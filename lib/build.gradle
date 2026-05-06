@@ -3,6 +3,10 @@ plugins {
     id 'maven-publish'
 }
 
+configurations {
+    all*.exclude group: 'xml-apis'
+}
+
 dependencies {
     api 'org.slf4j:slf4j-api:2.0.17'
     implementation 'commons-io:commons-io:2.22.0'
