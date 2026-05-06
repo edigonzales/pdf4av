@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <data name="label.author">
+        <value>Autore</value>
+    </data>
+    <data name="label.subject">
+        <value>Oggetto</value>
+    </data>
+    <data name="label.keywords">
+        <value>Parole chiave</value>
+    </data>
+</root>

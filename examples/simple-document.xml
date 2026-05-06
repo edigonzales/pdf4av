@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <title>Beispieltitel</title>
+  <meta>
+    <author>Max Muster</author>
+    <subject>Testdokument</subject>
+    <keywords>pdf,fo,av</keywords>
+  </meta>
+  <content>
+    <paragraph>Erster Absatz.</paragraph>
+    <paragraph>Zweiter Absatz.</paragraph>
+  </content>
+</document>
