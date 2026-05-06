@@ -3,15 +3,14 @@ plugins {
     id 'maven-publish'
 }
 
-configurations {
-    all*.exclude group: 'xml-apis'
-}
-
 dependencies {
     api 'org.slf4j:slf4j-api:2.0.17'
     implementation 'commons-io:commons-io:2.22.0'
     implementation 'net.sf.saxon:Saxon-HE:12.9'
-    implementation 'org.apache.xmlgraphics:fop:2.11'
+    implementation('org.apache.xmlgraphics:fop:2.11') {
+        exclude group: 'xml-apis', module: 'xml-apis'
+        exclude group: 'xml-apis', module: 'xml-apis-ext'
+    }
     implementation 'net.sf.offo:fop-hyph:2.0'
     implementation 'org.locationtech.jts:jts-core:1.20.0'
 

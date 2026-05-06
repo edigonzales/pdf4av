@@ -24,8 +24,9 @@ subprojects {
         }
     }
 
-    configurations {
-        all*.exclude group: 'xml-apis'
+    configurations.configureEach {
+        exclude group: 'xml-apis', module: 'xml-apis'
+        exclude group: 'xml-apis', module: 'xml-apis-ext'
     }
 
     tasks.withType(JavaCompile).configureEach {
