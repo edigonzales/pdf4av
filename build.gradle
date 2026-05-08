@@ -1,5 +1,5 @@
 ext {
-    mavenSnapshotUrl = 'https://jars.sogeo.services/snapshots'
+    mavenSnapshotUrl = 'https://jars.interlis.guru/snapshots'
     mavenUsername = providers.gradleProperty('mavenUsername')
         .orElse(providers.environmentVariable('MAVEN_USERNAME'))
     mavenPassword = providers.gradleProperty('mavenPassword')

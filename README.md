@@ -1,32 +1,14 @@
 # pdf4av
 
-`pdf4av` konvertiert ein bewusst einfaches XML-Dokument in `PDF` oder `XSL-FO`. `XSL-FO` bleibt eine offizielle Ausgabeoption, damit sich die Transformation beim Entwickeln und Debuggen direkt inspizieren lässt.
+`pdf4av` konvertiert einen AV-Extract in `PDF` oder `XSL-FO`. `XSL-FO` bleibt eine offizielle Ausgabeoption, damit sich die Transformation beim Entwickeln und Debuggen direkt inspizieren lässt.
 
-## XML-v1
+## Default-XSLT
 
-Das eingebaute Default-Stylesheet unterstützt aktuell dieses Minimalformat:
+Das eingebaute Default-Stylesheet ist `lib/src/main/resources/xslt/xml2pdf_V1_0.xsl` und erwartet ein XML im AV-Extract-Format, zum Beispiel:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<document>
-  <title>Beispieltitel</title>
-  <meta>
-    <author>Max Muster</author>
-    <subject>Testdokument</subject>
-    <keywords>pdf,fo,av</keywords>
-  </meta>
-  <content>
-    <paragraph>Erster Absatz.</paragraph>
-    <paragraph>Zweiter Absatz.</paragraph>
-  </content>
-</document>
-```
+- [CH994641443597.xml](/Users/stefan/sources/pdf4av/examples/CH994641443597.xml)
 
-Regeln:
-
-- `title` ist Pflicht.
-- `content` muss mindestens ein `paragraph` enthalten.
-- `meta` ist optional.
+Der erste Umsetzungsstand rendert bewusst nur die Titelseite.
 
 ## CLI
 
@@ -40,20 +22,27 @@ Optionale Parameter:
 - `--format pdf|fo` mit Default `pdf`
 - `--xslt <path>` für ein eigenes XSLT
 - `--locale <language-tag>` mit Default `de`
+- `--debug-table-grid` für sichtbare Tabellenrahmen beim Layout-Debugging
 
 Beispielaufrufe:
 
 ```bash
-./gradlew :app:run --args="--xml ../examples/simple-document.xml --out /tmp/pdf4av-out"
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH994641443597.xml --out /tmp/pdf4av-out"
 ```
 
 ```bash
-./gradlew :app:run --args="--xml ../examples/simple-document.xml --out /tmp/pdf4av-out --format fo"
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH994641443597.xml --out /tmp/pdf4av-out --format fo"
 ```
 
 ```bash
 ./gradlew :app:run --args="--xml /tmp/input.xml --out /tmp/pdf4av-out --xslt /tmp/custom.xsl --locale fr"
 ```
+
+```bash
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH994641443597.xml --out /tmp/pdf4av-out --format fo --debug-table-grid"
+```
+
+Mit `--debug-table-grid` rendert die AV-XSL sichtbare Tabellenrahmen für Header, Footer und die Tabellen der Titelseite. Der Schalter ist nur fürs Layout-Debugging gedacht.
 
 Die CLI schreibt den Pfad des erzeugten Artefakts auf `stdout`. Fehler werden auf `stderr` ausgegeben.
 
@@ -63,7 +52,10 @@ Die CLI schreibt den Pfad des erzeugten Artefakts auf `stdout`. Fehler werden au
 PdfConverter converter = new DefaultPdfConverter();
 ConversionResult pdf = converter.xmlToPdf(Path.of("/tmp/input.xml"), Path.of("/tmp/out"), Locale.GERMAN);
 ConversionResult fo = converter.xmlToFo(Path.of("/tmp/input.xml"), Path.of("/tmp/out"), Locale.GERMAN);
+ConversionResult debugFo = converter.xmlToFo(Path.of("/tmp/input.xml"), Path.of("/tmp/out"), Locale.GERMAN, true);
 ```
+
+`/tmp/input.xml` muss dabei ein AV-Extract im Default-Format sein, sofern keine eigene XSLT übergeben wird.
 
 Mit expliziter XSLT-Datei:
 

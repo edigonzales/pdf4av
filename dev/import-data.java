@@ -70,6 +70,7 @@ class import_data {
         items.put("logo-ch-pi", new ImportItem("logo-ch-pi", "AV_WebService_V1_0_Logo-ch.pi", "AV_WebService_V1_0_Logo-ch.pi.xml"));
         items.put("logo-ch", new ImportItem("logo-ch", "AV_WebService_V1_0_Logo-ch", "AV_WebService_V1_0_Logo-ch.xml"));
         items.put("logo-ch-so", new ImportItem("logo-ch-so", "AV_WebService_V1_0_Logo-ch.SO", "AV_WebService_V1_0_Logo-ch.SO.xml"));
+        items.put("logo-ch-be", new ImportItem("logo-ch-be", "AV_WebService_V1_0_Logo-ch.BE", "AV_WebService_V1_0_Logo-ch.BE.xml"));
         items.put("logo-ch-449", new ImportItem("logo-ch-449", "AV_WebService_V1_0_Logo-ch.449", "AV_WebService_V1_0_Logo-ch.449.xml"));
         // items.put("logo-ch-2498", new ImportItem("logo-ch-2498", "AV_WebService_V1_0_Logo-ch.2498", "AV_WebService_V1_0_Logo-ch.2498.xml"));
         // items.put("logo-ch-2500", new ImportItem("logo-ch-2500", "AV_WebService_V1_0_Logo-ch.2500", "AV_WebService_V1_0_Logo-ch.2500.xml"));
@@ -224,6 +225,7 @@ class import_data {
             case "logo-ch-pi" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.pi.xml");
             case "logo-ch" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.xml");
             case "logo-ch-so" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.SO.xml");
+            case "logo-ch-be" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.BE.xml");
             case "logo-ch-449" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.449.xml");
             // case "logo-ch-2498" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2498.xml");
             // case "logo-ch-2500" -> dataDir.resolve("AV_WebService_V1_0_Logo-ch.2500.xml");

@@ -1,12 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
-    <data name="label.author">
-        <value>Autur</value>
+    <data name="MainPage.Title">
+        <value>Extract da la mesiraziun uffiziala cun&#10;infurmaziun da proprietad</value>
     </data>
-    <data name="label.subject">
-        <value>Object</value>
+    <data name="MainPage.RealEstate_DPR.Number">
+        <value>Nr. da bain immobigliar</value>
     </data>
-    <data name="label.keywords">
-        <value>Pleds-clav</value>
+    <data name="MainPage.RealEstate_DPR.Type">
+        <value>Tip da bain immobigliar</value>
+    </data>
+    <data name="MainPage.Municipality_FosNr">
+        <value>Vischnanca (nr. UST)</value>
+    </data>
+    <data name="MainPage.Toponym">
+        <value>Toponim</value>
+    </data>
+    <data name="MainPage.LandRegistryArea">
+        <value>Surfatscha</value>
+    </data>
+    <data name="MainPage.UpdateDateCS">
+        <value>Stadi da la mesiraziun uffiziala</value>
+    </data>
+    <data name="MainPage.ExtractNumber">
+        <value>Numer da l'extract</value>
+    </data>
+    <data name="MainPage.ExtractIdentifier">
+        <value>Identifitgader da l'extract</value>
+    </data>
+    <data name="MainPage.CreationDate">
+        <value>Data da creaziun da l'extract</value>
+    </data>
+    <data name="MainPage.GeneralInformation">
+        <value>Infurmaziuns generalas</value>
+    </data>
+    <data name="LandDescription.Title">
+        <value>Grundstückbeschreibung</value>
+    </data>
+    <data name="LandDescription.LandCover.Title">
+        <value>Bodenbedeckungsanteile</value>
+    </data>
+    <data name="LandDescription.LandCover.Type">
+        <value>Art</value>
+    </data>
+    <data name="LandDescription.LandCover.Area">
+        <value>Anteil</value>
+    </data>
+    <data name="LandDescription.LandCover.Percent">
+        <value>Anteil in %</value>
+    </data>
+    <data name="LandDescription.Buildings.Title">
+        <value>Gebäude und Bauten</value>
+    </data>
+    <data name="LandDescription.Buildings.Type">
+        <value>Art</value>
+    </data>
+    <data name="LandDescription.Buildings.Egid">
+        <value>EGID</value>
+    </data>
+    <data name="LandDescription.Buildings.EgidLong">
+        <value>Eidg. Gebäudeidentifikator</value>
+    </data>
+    <data name="LandDescription.Buildings.Address">
+        <value>Adresse</value>
+    </data>
+    <data name="LandDescription.Buildings.AddressLong">
+        <value>Strassenname Hausnummer</value>
+    </data>
+    <data name="LandDescription.Buildings.Zip">
+        <value>PLZ</value>
+    </data>
+    <data name="LandDescription.Buildings.City">
+        <value>Ortschaft</value>
+    </data>
+    <data name="LandDescription.ResponsibleOffice.Title">
+        <value>Zuständige Stelle</value>
+    </data>
+    <data name="Page">
+        <value>Pagina</value>
     </data>
 </root>

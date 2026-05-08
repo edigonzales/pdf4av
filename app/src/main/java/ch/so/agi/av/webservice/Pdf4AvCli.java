@@ -14,7 +14,7 @@ import picocli.CommandLine.Spec;
 @Command(
         name = "pdf4av",
         mixinStandardHelpOptions = true,
-        description = "Converts a simple XML document into either PDF or XSL-FO."
+        description = "Converts an AV extract XML document into either PDF or XSL-FO."
 )
 public class Pdf4AvCli implements Callable<Integer> {
     @Option(names = "--xml", required = true, description = "Input XML file.")
@@ -31,6 +31,9 @@ public class Pdf4AvCli implements Callable<Integer> {
 
     @Option(names = "--locale", defaultValue = "de", description = "Locale used during transformation, e.g. de or fr.")
     private String localeTag;
+
+    @Option(names = "--debug-table-grid", description = "Render table borders for layout debugging.")
+    private boolean debugTableGrid;
 
     @Spec
     private CommandSpec spec;
@@ -56,7 +59,8 @@ public class Pdf4AvCli implements Callable<Integer> {
                     outputDirectory,
                     parseOutputFormat(outputFormat),
                     xsltFile,
-                    Locale.forLanguageTag(localeTag)
+                    Locale.forLanguageTag(localeTag),
+                    debugTableGrid
             );
             ConversionResult result = converter.convert(request);
             out.println(result.outputFile().toAbsolutePath());

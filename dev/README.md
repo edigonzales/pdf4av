@@ -11,7 +11,7 @@ jbang avws.java --server.port=8080 \
   --avws.tmpdir=/tmp \
   --avws.cadastreAuthorityUrl=https://agi.so.ch \
   --avws.webAppUrl="https://geo.so.ch/map/?oereb_egrid=" \
-  --avws.canton=Testkanton\
+  --avws.canton=Solothurn\
   --avws.subUnitOfLandRegisterDesignation=GB-Gemeinde \
   --avws.planForMainPage="https://geodienste.ch/db/av_situationsplan_0/deu?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=daten&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&MAP_RESOLUTION=100&DPI=96&OPACITIES=255&t=675&WIDTH=1920&HEIGHT=710&BBOX=2607051.2375,1228517.0374999999,2608067.2375,1228892.7458333333" \
   --avws.planForLandDescription="https://geodienste.ch/db/av_situationsplan_0/deu?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=daten&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&MAP_RESOLUTION=100&DPI=96&OPACITIES=255&t=675&WIDTH=1920&HEIGHT=710&BBOX=2607051.2375,1228517.0374999999,2608067.2375,1228892.7458333333" \
@@ -61,7 +61,7 @@ http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES
 
 
 ```
-curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES=true" 
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES=true" -o CH994641443597.xm
 ```
 
 
