@@ -25,10 +25,6 @@ jbang cache clear --deps
 jbang deps@jbangdev avws.java
 ```
 
-#server.use-forward-headers=true
-#server.tomcat.internal-proxies=
-#logging.level.root=DEBUG
-
 ```
 http://localhost:8080/logo/ch.SO
 ```
