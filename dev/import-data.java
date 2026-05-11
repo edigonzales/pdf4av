@@ -18,6 +18,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.time.Duration;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -186,8 +187,32 @@ class import_data {
             config2.setModeldir(modelDir(iliDir));
             Ili2db.readSettingsFromDb(config2);
             Ili2db.run(config2, null);
+
+            createPostSchemaIndexes(connection, db.schema());
             connection.commit();
         }
+    }
+
+    private static void createPostSchemaIndexes(Connection connection, String schema) throws Exception {
+        List<String> statements = List.of(
+            "CREATE INDEX IF NOT EXISTS offclndss_address_bdg_egid_idx ON "
+                + qualifiedName(schema, "offclndss_v2_2officlndxfddrsses_address")
+                + " (bdg_egid)"
+        );
+
+        try (Statement statement = connection.createStatement()) {
+            for (String sql : statements) {
+                statement.execute(sql);
+            }
+        }
+    }
+
+    private static String qualifiedName(String schema, String table) {
+        return quoteIdentifier(schema) + "." + quoteIdentifier(table);
+    }
+
+    private static String quoteIdentifier(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 
     private static void importKeys(
