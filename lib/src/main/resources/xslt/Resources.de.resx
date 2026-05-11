@@ -39,6 +39,27 @@
     <data name="OwnershipInformation.Title">
         <value>Eigentumsauskunft</value>
     </data>
+    <data name="ProjectedObjects.Title">
+        <value>Projektierte Objekte</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.Title">
+        <value>Projektierte Grundstücke</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.Number">
+        <value>Nummer</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.Egrid">
+        <value>EGRID</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.Type">
+        <value>Grundstückart</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.PreviousArea">
+        <value>Bisherige Fläche</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedProperties.NewArea">
+        <value>Neue Fläche</value>
+    </data>
     <data name="LandDescription.LandCover.Title">
         <value>Bodenbedeckungsanteile</value>
     </data>

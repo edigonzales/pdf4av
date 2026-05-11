@@ -80,6 +80,11 @@
     <xsl:variable name="land-description-building-address-width" as="xs:string" select="'52mm'"/>
     <xsl:variable name="land-description-building-zip-width" as="xs:string" select="'11mm'"/>
     <xsl:variable name="land-description-building-city-width" as="xs:string" select="'35mm'"/>
+    <xsl:variable name="projected-objects-number-width" as="xs:string" select="'25mm'"/>
+    <xsl:variable name="projected-objects-egrid-width" as="xs:string" select="'45mm'"/>
+    <xsl:variable name="projected-objects-type-width" as="xs:string" select="'48mm'"/>
+    <xsl:variable name="projected-objects-previous-area-width" as="xs:string" select="'28mm'"/>
+    <xsl:variable name="projected-objects-new-area-width" as="xs:string" select="'28mm'"/>
     <xsl:variable name="land-description-link-color" as="xs:string" select="'rgb(76,143,186)'"/>
     <xsl:variable name="table-label-width" as="xs:string" select="'68mm'"/>
     <xsl:variable name="table-value-width" as="xs:string" select="'106mm'"/>
@@ -111,6 +116,9 @@
                         <xsl:with-param name="realEstate" select="data:RealEstate_DPR"/>
                     </xsl:call-template>
                     <xsl:call-template name="insertLandDescriptionSection">
+                        <xsl:with-param name="realEstate" select="data:RealEstate_DPR"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="insertProjectedObjectsSection">
                         <xsl:with-param name="realEstate" select="data:RealEstate_DPR"/>
                     </xsl:call-template>
                     <fo:block id="last-page"/>
@@ -515,6 +523,90 @@
         </xsl:if>
     </xsl:template>
 
+    <xsl:template name="insertProjectedObjectsSection">
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+
+        <xsl:variable name="mutations" as="element(data:Mutation)*" select="$realEstate/data:Mutation"/>
+        <xsl:variable name="projectedProperties" as="element(data:projectedProperty)*"
+                      select="$mutations/data:projectedProperty"/>
+        <xsl:variable name="responsibleOffice" as="element(data:ResponsibleOffice)?" select="$realEstate/data:ResponsibleOffice"/>
+        <xsl:variable name="responsibleOfficeLine" as="xs:string"
+                      select="av:formatOfficeLine($responsibleOffice, $locale)"/>
+        <xsl:variable name="responsibleOfficeWebsite" as="xs:string"
+                      select="av:extractMultilingualText($responsibleOffice/data:OfficeAtWeb/data:LocalisedText, $locale)"/>
+
+        <xsl:if test="exists($mutations)">
+            <fo:block break-before="page"/>
+            <fo:block-container height="{$land-description-top-layout-height}">
+                <xsl:call-template name="insertProjectedObjectsTitle"/>
+                <xsl:call-template name="insertProjectedObjectsPlan">
+                    <xsl:with-param name="realEstate" select="$realEstate"/>
+                </xsl:call-template>
+            </fo:block-container>
+
+            <xsl:call-template name="renderLandDescriptionSectionHeading">
+                <xsl:with-param name="label" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Title']/value/text()"/>
+            </xsl:call-template>
+
+            <fo:table table-layout="fixed" width="{$plan-width}" font-size="{$land-description-table-font-size}">
+                <xsl:call-template name="applyDebugTableAttributes"/>
+                <fo:table-column column-width="{$projected-objects-number-width}"/>
+                <fo:table-column column-width="{$projected-objects-egrid-width}"/>
+                <fo:table-column column-width="{$projected-objects-type-width}"/>
+                <fo:table-column column-width="{$projected-objects-previous-area-width}"/>
+                <fo:table-column column-width="{$projected-objects-new-area-width}"/>
+                <fo:table-header>
+                    <fo:table-row>
+                        <xsl:call-template name="applyDebugTableRowAttributes"/>
+                        <xsl:call-template name="renderLandDescriptionHeaderCell">
+                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Number']/value/text()"/>
+                        </xsl:call-template>
+                        <xsl:call-template name="renderLandDescriptionHeaderCell">
+                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Egrid']/value/text()"/>
+                        </xsl:call-template>
+                        <xsl:call-template name="renderLandDescriptionHeaderCell">
+                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Type']/value/text()"/>
+                        </xsl:call-template>
+                        <xsl:call-template name="renderLandDescriptionHeaderCell">
+                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.PreviousArea']/value/text()"/>
+                            <xsl:with-param name="textAlign" select="'right'"/>
+                        </xsl:call-template>
+                        <xsl:call-template name="renderLandDescriptionHeaderCell">
+                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.NewArea']/value/text()"/>
+                            <xsl:with-param name="textAlign" select="'right'"/>
+                        </xsl:call-template>
+                    </fo:table-row>
+                </fo:table-header>
+                <fo:table-body>
+                    <xsl:for-each select="$projectedProperties">
+                        <xsl:variable name="egrid" as="xs:string" select="normalize-space(data:EGRID)"/>
+                        <xsl:variable name="previousArea" as="xs:string"
+                                      select="if ($egrid = normalize-space($realEstate/data:EGRID))
+                                              then av:formatSwissArea($realEstate/data:LandRegistryArea)
+                                              else ''"/>
+
+                        <xsl:call-template name="renderProjectedObjectsPropertyRow">
+                            <xsl:with-param name="number" select="normalize-space(data:Number)"/>
+                            <xsl:with-param name="egrid" select="$egrid"/>
+                            <xsl:with-param name="typeLabel"
+                                            select="av:extractMultilingualText(data:Type/data:Text/data:LocalisedText, $locale)"/>
+                            <xsl:with-param name="previousArea" select="$previousArea"/>
+                            <xsl:with-param name="newArea" select="av:formatSwissArea(data:newParcelArea)"/>
+                        </xsl:call-template>
+                    </xsl:for-each>
+                </fo:table-body>
+            </fo:table>
+
+            <xsl:if test="normalize-space($responsibleOfficeLine) or normalize-space($responsibleOfficeWebsite)">
+                <xsl:call-template name="renderOfficeSection">
+                    <xsl:with-param name="label" select="$localeXml/data[@name='LandDescription.ResponsibleOffice.Title']/value/text()"/>
+                    <xsl:with-param name="officeLine" select="$responsibleOfficeLine"/>
+                    <xsl:with-param name="officeWebsite" select="$responsibleOfficeWebsite"/>
+                </xsl:call-template>
+            </xsl:if>
+        </xsl:if>
+    </xsl:template>
+
     <xsl:template name="insertOwnershipInformationTitle">
         <fo:block-container
                 absolute-position="absolute"
@@ -553,6 +645,19 @@
         </fo:block-container>
     </xsl:template>
 
+    <xsl:template name="insertProjectedObjectsTitle">
+        <fo:block-container
+                absolute-position="absolute"
+                top="{$land-description-title-line-box-top}"
+                left="0mm"
+                width="100%"
+                height="{$land-description-title-box-height}">
+            <fo:block font-size="{$land-description-title-font-size}" font-weight="700" line-height="{$land-description-title-line-height}">
+                <xsl:value-of select="$localeXml/data[@name='ProjectedObjects.Title']/value/text()"/>
+            </fo:block>
+        </fo:block-container>
+    </xsl:template>
+
     <xsl:template name="insertLandDescriptionPlan">
         <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
 
@@ -576,6 +681,47 @@
                                 content-width="scale-to-fit"
                                 content-height="scale-to-fit"
                                 fox:alt-text="PlanForLandDescription">
+                            <xsl:attribute name="src"
+                                           select="concat(&quot;url('data:image/png;base64,&quot;, normalize-space($planImage), &quot;')&quot;)"/>
+                        </fo:external-graphic>
+                    </fo:block>
+                </xsl:when>
+                <xsl:otherwise>
+                    <fo:block-container
+                            width="{$plan-width}"
+                            height="{$plan-height}"
+                            border="{$land-description-table-rule} solid black"
+                            display-align="center">
+                        <fo:block text-align="center" font-size="8pt">Plan nicht verfuegbar</fo:block>
+                    </fo:block-container>
+                </xsl:otherwise>
+            </xsl:choose>
+        </fo:block-container>
+    </xsl:template>
+
+    <xsl:template name="insertProjectedObjectsPlan">
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+
+        <xsl:variable name="planImage" as="xs:string"
+                      select="av:createPlanForProjectedObjectsImage($realEstate/data:PlanForProjectedObjects, $realEstate/data:Limit, $locale)"/>
+
+        <fo:block-container
+                absolute-position="absolute"
+                top="{$land-description-plan-top}"
+                left="0mm"
+                width="{$plan-width}"
+                height="{$plan-height}">
+            <xsl:choose>
+                <xsl:when test="normalize-space($planImage)">
+                    <fo:block font-size="0pt" line-height="0pt">
+                        <fo:external-graphic
+                                border="{$land-description-table-rule} solid black"
+                                width="{$plan-width}"
+                                height="{$plan-height}"
+                                scaling="non-uniform"
+                                content-width="scale-to-fit"
+                                content-height="scale-to-fit"
+                                fox:alt-text="PlanForProjectedObjects">
                             <xsl:attribute name="src"
                                            select="concat(&quot;url('data:image/png;base64,&quot;, normalize-space($planImage), &quot;')&quot;)"/>
                         </fo:external-graphic>
@@ -850,6 +996,48 @@
                 <xsl:call-template name="applyDebugTableCellAttributes"/>
                 <fo:block>
                     <xsl:value-of select="$city"/>
+                </fo:block>
+            </fo:table-cell>
+        </fo:table-row>
+    </xsl:template>
+
+    <xsl:template name="renderProjectedObjectsPropertyRow">
+        <xsl:param name="number" as="xs:string" select="''"/>
+        <xsl:param name="egrid" as="xs:string" select="''"/>
+        <xsl:param name="typeLabel" as="xs:string" select="''"/>
+        <xsl:param name="previousArea" as="xs:string" select="''"/>
+        <xsl:param name="newArea" as="xs:string" select="''"/>
+
+        <fo:table-row border-bottom="{$land-description-table-rule} solid black" vertical-align="middle" line-height="{$land-description-row-height}">
+            <xsl:call-template name="applyDebugTableRowAttributes"/>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$number"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$egrid"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$typeLabel"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block text-align="right" line-height-shift-adjustment="disregard-shifts">
+                    <xsl:value-of select="$previousArea"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block text-align="right" line-height-shift-adjustment="disregard-shifts">
+                    <xsl:value-of select="$newArea"/>
                 </fo:block>
             </fo:table-cell>
         </fo:table-row>

@@ -64,13 +64,21 @@ curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGR
 curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH843546415105&GEOMETRY=true&WITHIMAGES=true" -o CH843546415105.xml
 ```
 
-proj liegen:
+proj liegen:  (CH528461643618 CH273542614644)
+
 ```
-curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH528461643618&GEOMETRY=true&WITHIMAGES=true" -o CH528461643618.xml 
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH273542614644&GEOMETRY=true&WITHIMAGES=true" -o CH273542614644_ohne_proj_liegen.xml 
 ```
 
+```
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH273542614644&GEOMETRY=true&WITHIMAGES=true&PROVISIONAL=true" -o CH273542614644_mit_proj_liegen.xml 
+```
 
+proj geb (auf zwei Liegenschaften) CH834642351474:
 
+```
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH834642351474&GEOMETRY=true&WITHIMAGES=true&PROVISIONAL=true" -o CH834642351474_mit_proj_geb.xml 
+```
 
 
 Projektierte Liegenschaften (die ersten beiden):

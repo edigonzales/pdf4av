@@ -215,7 +215,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-land-description-empty.xml"),
-                new SampleAvOptions(true, true, false, false, false, false, false, false, false, false, false)
+                new SampleAvOptions(true, true, false, false, false, false, false, false, false, false, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-land-description-empty");
 
@@ -251,7 +251,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-no-land-register-office.xml"),
-                new SampleAvOptions(true, true, true, true, true, true, true, true, false, false, false)
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, false, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-no-land-register-office");
 
@@ -261,6 +261,111 @@ class DefaultPdfConverterTest {
         assertEquals(1, countOccurrences(fo, "break-before=\"page\""));
         assertFalse(fo.contains("Amtschreiberei Olten-Gösgen"));
         assertTrue(fo.contains("Grundstückbeschreibung"));
+    }
+
+    @Test
+    void xmlToFoRendersProjectedObjectsSectionAfterLandDescriptionWhenMutationExists() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-projected-objects.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, true, true, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-projected-objects");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertTrue(fo.contains("Projektierte Objekte"));
+        assertTrue(fo.contains("Projektierte Grundstücke"));
+        assertTrue(fo.contains("PlanForProjectedObjects"));
+        assertTrue(fo.contains("Nummer"));
+        assertTrue(fo.contains("EGRID"));
+        assertTrue(fo.contains("Grundstückart"));
+        assertTrue(fo.contains("Bisherige Fläche"));
+        assertTrue(fo.contains("Neue Fläche"));
+        assertTrue(fo.contains("Zuständige Stelle"));
+        assertTrue(fo.contains("Jermann Ingenieure und Geometer AG, Gerbegässlein 5, 4450 Sissach"));
+        assertTrue(fo.contains("https://www.jermann-ag.ch"));
+        assertTrue(fo.contains("url('https://www.jermann-ag.ch')"));
+        assertEquals(3, countOccurrences(fo, "break-before=\"page\""));
+        assertTrue(fo.indexOf("Grundstückbeschreibung") < fo.indexOf("Projektierte Objekte"));
+
+        int projectedSectionStart = fo.indexOf("Projektierte Grundstücke");
+        int sameRowStart = fo.indexOf("CH123456789012", projectedSectionStart);
+        int sameRowPreviousArea = fo.indexOf("11'171 m²", sameRowStart);
+        int sameRowNewArea = fo.indexOf("1'234 m²", sameRowStart);
+        assertTrue(sameRowStart >= 0);
+        assertTrue(sameRowPreviousArea > sameRowStart);
+        assertTrue(sameRowNewArea > sameRowPreviousArea);
+
+        int newRowStart = fo.indexOf("CH999999999999", projectedSectionStart);
+        int newRowNewArea = fo.indexOf("987 m²", newRowStart);
+        assertTrue(newRowStart >= 0);
+        assertTrue(newRowNewArea > newRowStart);
+        assertEquals(-1, fo.substring(newRowStart, newRowNewArea).indexOf("11'171 m²"));
+
+        int responsibleOfficeStart = fo.indexOf("Zuständige Stelle", projectedSectionStart);
+        int responsibleOfficeLine = fo.indexOf("Jermann Ingenieure und Geometer AG, Gerbegässlein 5, 4450 Sissach", responsibleOfficeStart);
+        int responsibleOfficeWebsite = fo.indexOf("https://www.jermann-ag.ch", responsibleOfficeLine);
+        assertTrue(responsibleOfficeStart > newRowNewArea);
+        assertTrue(responsibleOfficeLine > responsibleOfficeStart);
+        assertTrue(responsibleOfficeWebsite > responsibleOfficeLine);
+    }
+
+    @Test
+    void xmlToFoOmitsProjectedObjectsResponsibleOfficeWhenResponsibleOfficeMissing() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-projected-objects-no-responsible-office.xml"),
+                new SampleAvOptions(true, true, true, true, false, false, true, true, false, true, true, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-projected-objects-no-responsible-office");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        int projectedObjectsStart = fo.indexOf("Projektierte Objekte");
+        assertTrue(projectedObjectsStart >= 0);
+        assertTrue(fo.contains("Projektierte Grundstücke"));
+        assertEquals(-1, fo.indexOf("Zuständige Stelle", projectedObjectsStart));
+        assertEquals(-1, fo.indexOf("Jermann Ingenieure und Geometer AG", projectedObjectsStart));
+    }
+
+    @Test
+    void xmlToFoOmitsProjectedObjectsSectionWhenMutationMissing() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(tempDir.resolve("input-no-projected-objects.xml"), true, true);
+        Path outputDirectory = tempDir.resolve("out-no-projected-objects");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertFalse(fo.contains("Projektierte Objekte"));
+        assertFalse(fo.contains("Projektierte Grundstücke"));
+        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
+    }
+
+    @Test
+    void xmlToFoUsesProjectedObjectsGeometryAndPageBreakWhenMutationExists() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-projected-objects-geometry.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, true, true, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-projected-objects-geometry");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertEquals(3, countOccurrences(fo, "break-before=\"page\""));
+        assertEquals(1, countOccurrences(fo, "fox:alt-text=\"PlanForProjectedObjects\""));
+        assertTrue(fo.contains("top=\"20.62mm\""));
+        assertTrue(fo.contains("height=\"119.62mm\""));
+        assertTrue(fo.contains("space-after=\"4.51mm\""));
+        assertTrue(fo.contains("column-width=\"25mm\""));
+        assertTrue(fo.contains("column-width=\"45mm\""));
+        assertTrue(fo.contains("column-width=\"48mm\""));
+        assertTrue(countOccurrences(fo, "column-width=\"28mm\"") >= 2);
     }
 
     @Test
@@ -305,7 +410,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("missing-optional.xml"),
-                new SampleAvOptions(false, false, true, true, true, false, true, true, false, true, false)
+                new SampleAvOptions(false, false, true, true, true, false, true, true, false, true, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-missing-optional");
 
@@ -322,7 +427,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-ambiguous-building.xml"),
-                new SampleAvOptions(true, true, true, true, true, true, true, true, true, true, true)
+                new SampleAvOptions(true, true, true, true, true, true, true, true, true, true, true, false)
         );
         Path outputDirectory = tempDir.resolve("out-ambiguous-building");
 
@@ -387,7 +492,7 @@ class DefaultPdfConverterTest {
     }
 
     private Path writeSampleAvXml(Path path, boolean includeMunicipalityLogo, boolean includeWebsite) throws IOException {
-        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true, false, true, true));
+        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true, false, true, true, false));
     }
 
     private Path writeSampleAvXml(Path path, SampleAvOptions options) throws IOException {
@@ -409,6 +514,7 @@ class DefaultPdfConverterTest {
         String buildings = buildBuildingsXml(options);
         String landCovers = buildLandCoversXml(options);
         String singleObjects = buildSingleObjectsXml(options);
+        String mutations = buildMutationsXml(options);
         String responsibleOffice = buildResponsibleOfficeXml(options);
         String landRegisterOffice = buildLandRegisterOfficeXml(options);
 
@@ -578,6 +684,7 @@ class DefaultPdfConverterTest {
                       </ns2:PlanForLandDescription>
                 %12$s
                 %13$s
+                %14$s
                     </ns2:RealEstate_DPR>
                   </ns2:Extract>
                 </GetExtractByIdResponse>
@@ -593,6 +700,7 @@ class DefaultPdfConverterTest {
                 planPng,
                 planPng,
                 planPng,
+                mutations,
                 responsibleOffice,
                 landRegisterOffice
         );
@@ -820,6 +928,44 @@ class DefaultPdfConverterTest {
                 """.formatted(website);
     }
 
+    private String buildMutationsXml(SampleAvOptions options) {
+        if (!options.includeMutations()) {
+            return "";
+        }
+
+        return """
+                      <ns2:Mutation>
+                        <ns2:Nummer>202600001</ns2:Nummer>
+                        <ns2:projectedProperty>
+                          <ns2:Number>1001</ns2:Number>
+                          <ns2:EGRID>CH123456789012</ns2:EGRID>
+                          <ns2:Type>
+                            <ns2:Text>
+                              <ns2:LocalisedText>
+                                <ns2:Language>de</ns2:Language>
+                                <ns2:Text>Liegenschaft</ns2:Text>
+                              </ns2:LocalisedText>
+                            </ns2:Text>
+                          </ns2:Type>
+                          <ns2:newParcelArea>1234</ns2:newParcelArea>
+                        </ns2:projectedProperty>
+                        <ns2:projectedProperty>
+                          <ns2:Number>1002</ns2:Number>
+                          <ns2:EGRID>CH999999999999</ns2:EGRID>
+                          <ns2:Type>
+                            <ns2:Text>
+                              <ns2:LocalisedText>
+                                <ns2:Language>de</ns2:Language>
+                                <ns2:Text>Liegenschaft</ns2:Text>
+                              </ns2:LocalisedText>
+                            </ns2:Text>
+                          </ns2:Type>
+                          <ns2:newParcelArea>987</ns2:newParcelArea>
+                        </ns2:projectedProperty>
+                      </ns2:Mutation>
+                """;
+    }
+
     private String buildLandRegisterOfficeXml(SampleAvOptions options) {
         if (!options.includeLandRegisterOffice()) {
             return "";
@@ -864,7 +1010,8 @@ class DefaultPdfConverterTest {
             boolean includeBuildingWithMultipleEntrances,
             boolean includeAmbiguousBuildingMatch,
             boolean includeLandRegisterOffice,
-            boolean includeLandRegisterOfficeWebsite
+            boolean includeLandRegisterOfficeWebsite,
+            boolean includeMutations
     ) {
     }
 
