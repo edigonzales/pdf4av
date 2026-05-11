@@ -157,8 +157,10 @@ class DefaultPdfConverterTest {
         assertTrue(fo.contains("Amtschreiberei Olten-Gösgen, Amthausquai 23, 4601 Olten"));
         assertTrue(fo.contains("https://geo.so.ch/standortkarte/index.html?egid=376404"));
         assertTrue(fo.contains("url('https://geo.so.ch/standortkarte/index.html?egid=376404')"));
-        assertEquals(1, countOccurrences(fo, "3'671 m²"));
+        assertEquals(1, countOccurrences(fo, "2'000 m²"));
         assertTrue(fo.contains("&lt; 1%"));
+        assertTrue(fo.contains("unterirdisches Gebäude"));
+        assertEquals(1, countOccurrences(fo, "Unterstand"));
         assertEquals(1, countOccurrences(fo, "2355731"));
         assertTrue(fo.contains("999999999"));
         assertTrue(fo.contains("Mühlemattstrasse 36"));
@@ -167,6 +169,9 @@ class DefaultPdfConverterTest {
         assertTrue(fo.contains("https://www.jermann-ag.ch"));
         assertTrue(fo.contains("url('https://www.jermann-ag.ch')"));
         assertTrue(fo.indexOf("Eigentumsauskunft") < fo.indexOf("Grundstückbeschreibung"));
+        assertTrue(fo.indexOf("420760") < fo.indexOf("2355661"));
+        assertTrue(fo.indexOf("2355661") < fo.indexOf("2355731"));
+        assertTrue(fo.indexOf("2355731") < fo.indexOf("999999999"));
     }
 
     @Test
@@ -192,9 +197,9 @@ class DefaultPdfConverterTest {
         assertTrue(fo.contains("column-width=\"28mm\""));
         assertTrue(fo.contains("column-width=\"40mm\""));
         assertTrue(fo.contains("column-width=\"36mm\""));
-        assertTrue(fo.contains("column-width=\"46mm\""));
+        assertTrue(fo.contains("column-width=\"52mm\""));
         assertTrue(fo.contains("column-width=\"11mm\""));
-        assertTrue(fo.contains("column-width=\"41mm\""));
+        assertTrue(fo.contains("column-width=\"35mm\""));
         assertTrue(fo.contains("space-after=\"4.51mm\""));
         assertTrue(fo.contains("font-size=\"6pt\""));
         assertTrue(fo.contains("line-height=\"8pt\""));
@@ -210,7 +215,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-land-description-empty.xml"),
-                new SampleAvOptions(true, true, false, false, false, false, false, false, false, false)
+                new SampleAvOptions(true, true, false, false, false, false, false, false, false, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-land-description-empty");
 
@@ -246,7 +251,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-no-land-register-office.xml"),
-                new SampleAvOptions(true, true, true, true, true, true, true, true, false, false)
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-no-land-register-office");
 
@@ -300,7 +305,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("missing-optional.xml"),
-                new SampleAvOptions(false, false, true, true, true, false, true, true, true, false)
+                new SampleAvOptions(false, false, true, true, true, false, true, true, false, true, false)
         );
         Path outputDirectory = tempDir.resolve("out-missing-optional");
 
@@ -310,6 +315,21 @@ class DefaultPdfConverterTest {
         assertTrue(Files.exists(result.outputFile()));
         assertFalse(fo.contains("null"));
         assertFalse(fo.contains("url('')"));
+    }
+
+    @Test
+    void xmlToFoFailsWhenBuildingTypeMatchIsAmbiguous() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-ambiguous-building.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, true, true, true, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-ambiguous-building");
+
+        ConversionException exception = assertThrows(ConversionException.class,
+                () -> converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN));
+
+        assertTrue(exception.getMessage().contains("input-ambiguous-building.xml"));
     }
 
     @Test
@@ -367,7 +387,7 @@ class DefaultPdfConverterTest {
     }
 
     private Path writeSampleAvXml(Path path, boolean includeMunicipalityLogo, boolean includeWebsite) throws IOException {
-        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true, true, true));
+        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true, false, true, true));
     }
 
     private Path writeSampleAvXml(Path path, SampleAvOptions options) throws IOException {
@@ -388,6 +408,7 @@ class DefaultPdfConverterTest {
                 : "";
         String buildings = buildBuildingsXml(options);
         String landCovers = buildLandCoversXml(options);
+        String singleObjects = buildSingleObjectsXml(options);
         String responsibleOffice = buildResponsibleOfficeXml(options);
         String landRegisterOffice = buildLandRegisterOfficeXml(options);
 
@@ -494,11 +515,12 @@ class DefaultPdfConverterTest {
                       </ns2:Limit>
                 %6$s
                 %7$s
+                %8$s
                       <ns2:PlanForMainPage>
                         <ns2:Image>
                           <ns2:LocalisedBlob>
                             <ns2:Language>de</ns2:Language>
-                            <ns2:Blob>%8$s</ns2:Blob>
+                            <ns2:Blob>%9$s</ns2:Blob>
                           </ns2:LocalisedBlob>
                         </ns2:Image>
                         <ns2:min>
@@ -514,7 +536,7 @@ class DefaultPdfConverterTest {
                         <ns2:Image>
                           <ns2:LocalisedBlob>
                             <ns2:Language>de</ns2:Language>
-                            <ns2:Blob>%9$s</ns2:Blob>
+                            <ns2:Blob>%10$s</ns2:Blob>
                           </ns2:LocalisedBlob>
                         </ns2:Image>
                         <ns2:min>
@@ -536,7 +558,7 @@ class DefaultPdfConverterTest {
                         <ns2:Image>
                           <ns2:LocalisedBlob>
                             <ns2:Language>de</ns2:Language>
-                            <ns2:Blob>%10$s</ns2:Blob>
+                            <ns2:Blob>%11$s</ns2:Blob>
                           </ns2:LocalisedBlob>
                         </ns2:Image>
                         <ns2:min>
@@ -554,8 +576,8 @@ class DefaultPdfConverterTest {
                           </ns2:LocalisedText>
                         </ns2:ReferenceWMS>
                       </ns2:PlanForLandDescription>
-                %11$s
                 %12$s
+                %13$s
                     </ns2:RealEstate_DPR>
                   </ns2:Extract>
                 </GetExtractByIdResponse>
@@ -567,6 +589,7 @@ class DefaultPdfConverterTest {
                 propertyInfoWebsite,
                 buildings,
                 landCovers,
+                singleObjects,
                 planPng,
                 planPng,
                 planPng,
@@ -669,20 +692,6 @@ class DefaultPdfConverterTest {
                       </ns2:LandCover>
                       <ns2:LandCover>
                         <ns2:Type>
-                          <ns2:Code>buildings</ns2:Code>
-                          <ns2:Text>
-                            <ns2:LocalisedText>
-                              <ns2:Language>de</ns2:Language>
-                              <ns2:Text>Gebäude</ns2:Text>
-                            </ns2:LocalisedText>
-                          </ns2:Text>
-                        </ns2:Type>
-                        <ns2:Area>1671</ns2:Area>
-                        <ns2:AreaShare>1671</ns2:AreaShare>
-                        <ns2:EGID>2355661</ns2:EGID>
-                      </ns2:LandCover>
-                      <ns2:LandCover>
-                        <ns2:Type>
                           <ns2:Code>hard_surfaced.roads_tracks</ns2:Code>
                           <ns2:Text>
                             <ns2:LocalisedText>
@@ -708,6 +717,74 @@ class DefaultPdfConverterTest {
                         <ns2:AreaShare>7470</ns2:AreaShare>
                       </ns2:LandCover>
                 """;
+    }
+
+    private String buildSingleObjectsXml(SampleAvOptions options) {
+        if (!options.includeBuildings()) {
+            return "";
+        }
+
+        StringBuilder xml = new StringBuilder("""
+                      <ns2:SingleObject>
+                        <ns2:Type>
+                          <ns2:Code>underground_structure</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>unterirdisches Gebäude</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                        <ns2:EGID>2355661</ns2:EGID>
+                      </ns2:SingleObject>
+                      <ns2:SingleObject>
+                        <ns2:Type>
+                          <ns2:Code>wall</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>Mauer</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                      </ns2:SingleObject>
+                """);
+
+        if (options.includeBuildingWithMultipleEntrances()) {
+            xml.append("""
+                      <ns2:SingleObject>
+                        <ns2:Type>
+                          <ns2:Code>shelter</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>Unterstand</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                        <ns2:EGID>2355731</ns2:EGID>
+                      </ns2:SingleObject>
+                    """);
+        }
+
+        if (options.includeAmbiguousBuildingMatch()) {
+            xml.append("""
+                      <ns2:SingleObject>
+                        <ns2:Type>
+                          <ns2:Code>other_portion_of_building</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>übriger Gebäudeteil</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                        <ns2:EGID>420760</ns2:EGID>
+                      </ns2:SingleObject>
+                    """);
+        }
+
+        return xml.toString();
     }
 
     private String buildResponsibleOfficeXml(SampleAvOptions options) {
@@ -785,6 +862,7 @@ class DefaultPdfConverterTest {
             boolean includeResponsibleOfficeWebsite,
             boolean includeBuildingWithoutEntrance,
             boolean includeBuildingWithMultipleEntrances,
+            boolean includeAmbiguousBuildingMatch,
             boolean includeLandRegisterOffice,
             boolean includeLandRegisterOfficeWebsite
     ) {

@@ -64,6 +64,11 @@ curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGR
 curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH843546415105&GEOMETRY=true&WITHIMAGES=true" -o CH843546415105.xml
 ```
 
+proj liegen:
+```
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH528461643618&GEOMETRY=true&WITHIMAGES=true" -o CH528461643618.xml 
+```
+
 
 
 

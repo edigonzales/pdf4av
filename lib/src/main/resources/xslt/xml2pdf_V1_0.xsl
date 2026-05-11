@@ -481,6 +481,7 @@
 
         <xsl:if test="exists($buildings)">
             <xsl:call-template name="insertLandDescriptionBuildingsSection">
+                <xsl:with-param name="realEstate" select="$realEstate"/>
                 <xsl:with-param name="buildings" select="$buildings"/>
             </xsl:call-template>
         </xsl:if>
@@ -659,6 +660,7 @@
     </xsl:template>
 
     <xsl:template name="insertLandDescriptionBuildingsSection">
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
         <xsl:param name="buildings" as="element(data:Building)*"/>
 
         <xsl:call-template name="renderLandDescriptionSectionHeading">
@@ -697,15 +699,24 @@
             </fo:table-header>
             <fo:table-body>
                 <xsl:for-each select="$buildings">
+                    <xsl:sort select="av:buildingOriginSortKey(av:buildingOrigin(., $realEstate))" data-type="number"/>
+
                     <xsl:variable name="building" as="element(data:Building)" select="."/>
+                    <xsl:variable name="origin" as="xs:string" select="av:buildingOrigin($building, $realEstate)"/>
                     <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+                    <xsl:variable name="typeLabel" as="xs:string"
+                                  select="av:buildingTypeLabel($building, $realEstate, $locale)"/>
                     <xsl:variable name="entrances" as="element(data:BuildingEntrance)*" select="$building/data:BuildingEntrance"/>
+
+                    <xsl:if test="$origin = 'ambiguous'">
+                        <xsl:message terminate="yes">Ambiguous building type match for EGID <xsl:value-of select="$egid"/>.</xsl:message>
+                    </xsl:if>
 
                     <xsl:choose>
                         <xsl:when test="exists($entrances)">
                             <xsl:for-each select="$entrances">
                                 <xsl:call-template name="renderLandDescriptionBuildingRow">
-                                    <xsl:with-param name="typeLabel" select="if (position() = 1) then 'Gebäude' else ''"/>
+                                    <xsl:with-param name="typeLabel" select="if (position() = 1) then $typeLabel else ''"/>
                                     <xsl:with-param name="egid" select="if (position() = 1) then $egid else ''"/>
                                     <xsl:with-param name="address" select="av:formatAddressLine(data:Street, data:Number)"/>
                                     <xsl:with-param name="postalCode" select="normalize-space(data:PostalCode)"/>
@@ -715,7 +726,7 @@
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:call-template name="renderLandDescriptionBuildingRow">
-                                <xsl:with-param name="typeLabel" select="'Gebäude'"/>
+                                <xsl:with-param name="typeLabel" select="$typeLabel"/>
                                 <xsl:with-param name="egid" select="$egid"/>
                             </xsl:call-template>
                         </xsl:otherwise>
@@ -926,6 +937,49 @@
                 )[1]))"/>
     </xsl:function>
 
+    <xsl:function name="av:buildingOrigin" as="xs:string">
+        <xsl:param name="building" as="element(data:Building)"/>
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+
+        <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+        <xsl:variable name="landCoverMatches" as="element(data:LandCover)*"
+                      select="if ($egid) then $realEstate/data:LandCover[normalize-space(data:EGID) = $egid] else ()"/>
+        <xsl:variable name="singleObjectMatches" as="element(data:SingleObject)*"
+                      select="if ($egid) then $realEstate/data:SingleObject[normalize-space(data:EGID) = $egid] else ()"/>
+
+        <xsl:sequence
+                select="
+                    if (count($landCoverMatches) = 1 and empty($singleObjectMatches)) then 'landcover'
+                    else if (count($singleObjectMatches) = 1 and empty($landCoverMatches)) then 'singleobject'
+                    else if (empty($landCoverMatches) and empty($singleObjectMatches)) then 'fallback'
+                    else 'ambiguous'
+                "/>
+    </xsl:function>
+
+    <xsl:function name="av:buildingTypeLabel" as="xs:string">
+        <xsl:param name="building" as="element(data:Building)"/>
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+        <xsl:param name="requestedLocale" as="xs:string"/>
+
+        <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+        <xsl:variable name="origin" as="xs:string" select="av:buildingOrigin($building, $realEstate)"/>
+
+        <xsl:sequence
+                select="
+                    if ($origin = 'landcover')
+                    then av:extractMultilingualText(
+                        $realEstate/data:LandCover[normalize-space(data:EGID) = $egid][1]/data:Type/data:Text/data:LocalisedText,
+                        $requestedLocale
+                    )
+                    else if ($origin = 'singleobject')
+                    then av:extractMultilingualText(
+                        $realEstate/data:SingleObject[normalize-space(data:EGID) = $egid][1]/data:Type/data:Text/data:LocalisedText,
+                        $requestedLocale
+                    )
+                    else 'Gebäude'
+                "/>
+    </xsl:function>
+
     <xsl:function name="av:formatSwissDate" as="xs:string">
         <xsl:param name="value" as="item()*"/>
 
@@ -1063,6 +1117,18 @@
                     else if ($code = ('without_vegetation.other_without_vegetation', 'vegetationless.other_vegetationless')) then 64
                     else if (starts-with($code, 'without_vegetation.') or starts-with($code, 'vegetationless.')) then 69
                     else 999
+                "/>
+    </xsl:function>
+
+    <xsl:function name="av:buildingOriginSortKey" as="xs:integer">
+        <xsl:param name="origin" as="xs:string?"/>
+
+        <xsl:sequence
+                select="
+                    if ($origin = 'landcover') then 10
+                    else if ($origin = 'singleobject') then 20
+                    else if ($origin = 'fallback') then 30
+                    else 40
                 "/>
     </xsl:function>
 </xsl:stylesheet>
