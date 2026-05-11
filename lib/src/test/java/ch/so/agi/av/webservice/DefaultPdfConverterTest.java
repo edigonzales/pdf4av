@@ -42,7 +42,7 @@ class DefaultPdfConverterTest {
         assertTrue(Files.size(result.outputFile()) > 0);
 
         try (PDDocument pdfDocument = Loader.loadPDF(result.outputFile().toFile())) {
-            assertEquals(2, pdfDocument.getNumberOfPages());
+            assertEquals(3, pdfDocument.getNumberOfPages());
         }
     }
 
@@ -149,10 +149,14 @@ class DefaultPdfConverterTest {
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
         assertTrue(fo.contains("Grundstückbeschreibung"));
+        assertTrue(fo.contains("Eigentumsauskunft"));
         assertTrue(fo.contains("PlanForLandDescription"));
         assertTrue(fo.contains("Bodenbedeckungsanteile"));
         assertTrue(fo.contains("Gebäude und Bauten"));
         assertTrue(fo.contains("Zuständige Stelle"));
+        assertTrue(fo.contains("Amtschreiberei Olten-Gösgen, Amthausquai 23, 4601 Olten"));
+        assertTrue(fo.contains("https://geo.so.ch/standortkarte/index.html?egid=376404"));
+        assertTrue(fo.contains("url('https://geo.so.ch/standortkarte/index.html?egid=376404')"));
         assertEquals(1, countOccurrences(fo, "3'671 m²"));
         assertTrue(fo.contains("&lt; 1%"));
         assertEquals(1, countOccurrences(fo, "2355731"));
@@ -162,6 +166,7 @@ class DefaultPdfConverterTest {
         assertTrue(fo.contains("Jermann Ingenieure und Geometer AG, Gerbegässlein 5, 4450 Sissach"));
         assertTrue(fo.contains("https://www.jermann-ag.ch"));
         assertTrue(fo.contains("url('https://www.jermann-ag.ch')"));
+        assertTrue(fo.indexOf("Eigentumsauskunft") < fo.indexOf("Grundstückbeschreibung"));
     }
 
     @Test
@@ -173,8 +178,10 @@ class DefaultPdfConverterTest {
         ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
-        assertTrue(fo.contains("break-before=\"page\""));
+        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
+        assertTrue(fo.contains("Eigentumsauskunft"));
         assertTrue(fo.contains("height=\"119.62mm\""));
+        assertTrue(fo.contains("height=\"20.62mm\""));
         assertTrue(fo.contains("top=\"20.62mm\""));
         assertTrue(fo.contains("font-size=\"15pt\""));
         assertTrue(fo.contains("line-height=\"18pt\""));
@@ -195,6 +202,7 @@ class DefaultPdfConverterTest {
 //        assertFalse(fo.contains("background-color=\"green\""));
 //        assertFalse(fo.contains("background-color=\"yellow\""));
         assertEquals(1, countOccurrences(fo, "Grundstückbeschreibung"));
+        assertTrue(fo.contains("Eigentumsauskunft"));
     }
 
     @Test
@@ -202,7 +210,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("input-land-description-empty.xml"),
-                new SampleAvOptions(true, true, false, false, false, false, false, false)
+                new SampleAvOptions(true, true, false, false, false, false, false, false, false, false)
         );
         Path outputDirectory = tempDir.resolve("out-land-description-empty");
 
@@ -210,9 +218,44 @@ class DefaultPdfConverterTest {
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
         assertTrue(fo.contains("Grundstückbeschreibung"));
+        assertEquals(1, countOccurrences(fo, "break-before=\"page\""));
         assertFalse(fo.contains("Bodenbedeckungsanteile"));
         assertFalse(fo.contains("Gebäude und Bauten"));
         assertFalse(fo.contains("Zuständige Stelle"));
+    }
+
+    @Test
+    void xmlToFoRendersOwnershipInformationPageBetweenTitlePageAndLandDescription() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(tempDir.resolve("input-ownership-information.xml"), true, true);
+        Path outputDirectory = tempDir.resolve("out-ownership-information");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertTrue(fo.contains("Eigentumsauskunft"));
+        assertEquals(1, countOccurrences(fo, "Grundstückbeschreibung"));
+        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
+        assertTrue(fo.indexOf("Eigentumsauskunft") < fo.indexOf("Grundstückbeschreibung"));
+        assertTrue(fo.contains("Amtschreiberei Olten-Gösgen, Amthausquai 23, 4601 Olten"));
+        assertTrue(fo.contains("keep-with-next.within-page=\"always\">Zuständige Stelle</fo:block>"));
+    }
+
+    @Test
+    void xmlToFoOmitsOwnershipInformationPageWhenLandRegisterOfficeIsMissing() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-no-land-register-office.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, false)
+        );
+        Path outputDirectory = tempDir.resolve("out-no-land-register-office");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertEquals(1, countOccurrences(fo, "break-before=\"page\""));
+        assertFalse(fo.contains("Amtschreiberei Olten-Gösgen"));
+        assertTrue(fo.contains("Grundstückbeschreibung"));
     }
 
     @Test
@@ -257,7 +300,7 @@ class DefaultPdfConverterTest {
         PdfConverter converter = new DefaultPdfConverter();
         Path xmlFile = writeSampleAvXml(
                 tempDir.resolve("missing-optional.xml"),
-                new SampleAvOptions(false, false, true, true, true, false, true, true)
+                new SampleAvOptions(false, false, true, true, true, false, true, true, true, false)
         );
         Path outputDirectory = tempDir.resolve("out-missing-optional");
 
@@ -324,7 +367,7 @@ class DefaultPdfConverterTest {
     }
 
     private Path writeSampleAvXml(Path path, boolean includeMunicipalityLogo, boolean includeWebsite) throws IOException {
-        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true));
+        return writeSampleAvXml(path, new SampleAvOptions(includeMunicipalityLogo, includeWebsite, true, true, true, true, true, true, true, true));
     }
 
     private Path writeSampleAvXml(Path path, SampleAvOptions options) throws IOException {
@@ -346,6 +389,7 @@ class DefaultPdfConverterTest {
         String buildings = buildBuildingsXml(options);
         String landCovers = buildLandCoversXml(options);
         String responsibleOffice = buildResponsibleOfficeXml(options);
+        String landRegisterOffice = buildLandRegisterOfficeXml(options);
 
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -511,6 +555,7 @@ class DefaultPdfConverterTest {
                         </ns2:ReferenceWMS>
                       </ns2:PlanForLandDescription>
                 %11$s
+                %12$s
                     </ns2:RealEstate_DPR>
                   </ns2:Extract>
                 </GetExtractByIdResponse>
@@ -525,7 +570,8 @@ class DefaultPdfConverterTest {
                 planPng,
                 planPng,
                 planPng,
-                responsibleOffice
+                responsibleOffice,
+                landRegisterOffice
         );
         Files.writeString(path, xml, StandardCharsets.UTF_8);
         return path;
@@ -618,6 +664,7 @@ class DefaultPdfConverterTest {
                           </ns2:Text>
                         </ns2:Type>
                         <ns2:Area>2000</ns2:Area>
+                        <ns2:AreaShare>2000</ns2:AreaShare>
                         <ns2:EGID>420760</ns2:EGID>
                       </ns2:LandCover>
                       <ns2:LandCover>
@@ -631,6 +678,7 @@ class DefaultPdfConverterTest {
                           </ns2:Text>
                         </ns2:Type>
                         <ns2:Area>1671</ns2:Area>
+                        <ns2:AreaShare>1671</ns2:AreaShare>
                         <ns2:EGID>2355661</ns2:EGID>
                       </ns2:LandCover>
                       <ns2:LandCover>
@@ -644,6 +692,7 @@ class DefaultPdfConverterTest {
                           </ns2:Text>
                         </ns2:Type>
                         <ns2:Area>30</ns2:Area>
+                        <ns2:AreaShare>30</ns2:AreaShare>
                       </ns2:LandCover>
                       <ns2:LandCover>
                         <ns2:Type>
@@ -656,6 +705,7 @@ class DefaultPdfConverterTest {
                           </ns2:Text>
                         </ns2:Type>
                         <ns2:Area>7470</ns2:Area>
+                        <ns2:AreaShare>7470</ns2:AreaShare>
                       </ns2:LandCover>
                 """;
     }
@@ -693,6 +743,39 @@ class DefaultPdfConverterTest {
                 """.formatted(website);
     }
 
+    private String buildLandRegisterOfficeXml(SampleAvOptions options) {
+        if (!options.includeLandRegisterOffice()) {
+            return "";
+        }
+
+        String website = options.includeLandRegisterOfficeWebsite()
+                ? """
+                        <ns2:OfficeAtWeb>
+                          <ns2:LocalisedText>
+                            <ns2:Language>de</ns2:Language>
+                            <ns2:Text>https://geo.so.ch/standortkarte/index.html?egid=376404</ns2:Text>
+                          </ns2:LocalisedText>
+                        </ns2:OfficeAtWeb>
+                """
+                : "";
+
+        return """
+                      <ns2:LandRegisterOffice>
+                        <ns2:Name>
+                          <ns2:LocalisedText>
+                            <ns2:Language>de</ns2:Language>
+                            <ns2:Text>Amtschreiberei Olten-Gösgen</ns2:Text>
+                          </ns2:LocalisedText>
+                        </ns2:Name>
+                %s
+                        <ns2:Street>Amthausquai</ns2:Street>
+                        <ns2:Number>23</ns2:Number>
+                        <ns2:PostalCode>4601</ns2:PostalCode>
+                        <ns2:City>Olten</ns2:City>
+                      </ns2:LandRegisterOffice>
+                """.formatted(website);
+    }
+
     private record SampleAvOptions(
             boolean includeMunicipalityLogo,
             boolean includePropertyInfoWebsite,
@@ -701,7 +784,9 @@ class DefaultPdfConverterTest {
             boolean includeResponsibleOffice,
             boolean includeResponsibleOfficeWebsite,
             boolean includeBuildingWithoutEntrance,
-            boolean includeBuildingWithMultipleEntrances
+            boolean includeBuildingWithMultipleEntrances,
+            boolean includeLandRegisterOffice,
+            boolean includeLandRegisterOfficeWebsite
     ) {
     }
 

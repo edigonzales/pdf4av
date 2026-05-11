@@ -57,7 +57,11 @@ http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES
 
 
 ```
-curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES=true" -o CH994641443597.xm
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH994641443597&GEOMETRY=true&WITHIMAGES=true" -o CH994641443597.xml
+```
+
+```
+curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH843546415105&GEOMETRY=true&WITHIMAGES=true" -o CH843546415105.xml
 ```
 
 

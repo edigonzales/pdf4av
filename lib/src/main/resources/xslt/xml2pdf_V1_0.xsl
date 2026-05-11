@@ -54,6 +54,9 @@
     <xsl:variable name="land-description-top-layout-height-mm" as="xs:decimal" select="$land-description-plan-top-mm + 99.0"/>
     <xsl:variable name="land-description-top-layout-height" as="xs:string"
                   select="concat(format-number($land-description-top-layout-height-mm, '0.###'), 'mm')"/>
+    <xsl:variable name="ownership-information-top-layout-height-mm" as="xs:decimal" select="$land-description-plan-top-mm"/>
+    <xsl:variable name="ownership-information-top-layout-height" as="xs:string"
+                  select="concat(format-number($ownership-information-top-layout-height-mm, '0.###'), 'mm')"/>
     <xsl:variable name="land-description-section-gap" as="xs:string" select="'8mm'"/>
     <xsl:variable name="land-description-heading-optical-bottom-correction-mm" as="xs:decimal" select="1.49"/>
     <xsl:variable name="land-description-heading-to-table-gap" as="xs:string"
@@ -74,9 +77,9 @@
     <xsl:variable name="land-description-land-cover-percent-width" as="xs:string" select="'28mm'"/>
     <xsl:variable name="land-description-building-type-width" as="xs:string" select="'40mm'"/>
     <xsl:variable name="land-description-building-egid-width" as="xs:string" select="'36mm'"/>
-    <xsl:variable name="land-description-building-address-width" as="xs:string" select="'46mm'"/>
+    <xsl:variable name="land-description-building-address-width" as="xs:string" select="'52mm'"/>
     <xsl:variable name="land-description-building-zip-width" as="xs:string" select="'11mm'"/>
-    <xsl:variable name="land-description-building-city-width" as="xs:string" select="'41mm'"/>
+    <xsl:variable name="land-description-building-city-width" as="xs:string" select="'35mm'"/>
     <xsl:variable name="land-description-link-color" as="xs:string" select="'rgb(76,143,186)'"/>
     <xsl:variable name="table-label-width" as="xs:string" select="'68mm'"/>
     <xsl:variable name="table-value-width" as="xs:string" select="'106mm'"/>
@@ -104,6 +107,9 @@
                 <xsl:call-template name="insertHeaderAndFooter"/>
                 <fo:flow flow-name="xsl-region-body">
                     <xsl:call-template name="insertTitlePage"/>
+                    <xsl:call-template name="insertOwnershipInformationSection">
+                        <xsl:with-param name="realEstate" select="data:RealEstate_DPR"/>
+                    </xsl:call-template>
                     <xsl:call-template name="insertLandDescriptionSection">
                         <xsl:with-param name="realEstate" select="data:RealEstate_DPR"/>
                     </xsl:call-template>
@@ -132,7 +138,7 @@
 
     <xsl:template name="insertHeaderAndFooter">
         <fo:static-content flow-name="xsl-region-before">
-            <fo:block-container background-color="wheat"
+            <fo:block-container background-color="transparent"
                     width="100%"
                     height="{$header-height}"
                     margin="0mm"
@@ -454,7 +460,7 @@
         <xsl:variable name="buildings" as="element(data:Building)*" select="$realEstate/data:Building"/>
         <xsl:variable name="responsibleOffice" as="element(data:ResponsibleOffice)?" select="$realEstate/data:ResponsibleOffice"/>
         <xsl:variable name="responsibleOfficeLine" as="xs:string"
-                      select="av:formatResponsibleOfficeLine($responsibleOffice, $locale)"/>
+                      select="av:formatOfficeLine($responsibleOffice, $locale)"/>
         <xsl:variable name="responsibleOfficeWebsite" as="xs:string"
                       select="av:extractMultilingualText($responsibleOffice/data:OfficeAtWeb/data:LocalisedText, $locale)"/>
 
@@ -485,6 +491,52 @@
                 <xsl:with-param name="responsibleOfficeWebsite" select="$responsibleOfficeWebsite"/>
             </xsl:call-template>
         </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="insertOwnershipInformationSection">
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+
+        <xsl:variable name="landRegisterOffice" as="element(data:LandRegisterOffice)?" select="$realEstate/data:LandRegisterOffice"/>
+        <xsl:variable name="landRegisterOfficeLine" as="xs:string"
+                      select="av:formatOfficeLine($landRegisterOffice, $locale)"/>
+        <xsl:variable name="landRegisterOfficeWebsite" as="xs:string"
+                      select="av:extractMultilingualText($landRegisterOffice/data:OfficeAtWeb/data:LocalisedText, $locale)"/>
+
+        <xsl:if test="normalize-space($landRegisterOfficeLine) or normalize-space($landRegisterOfficeWebsite)">
+            <fo:block break-before="page"/>
+            <fo:block-container height="{$ownership-information-top-layout-height}">
+                <xsl:call-template name="insertOwnershipInformationTitle"/>
+            </fo:block-container>
+            <xsl:call-template name="insertOwnershipInformationLandRegisterOfficeSection">
+                <xsl:with-param name="landRegisterOfficeLine" select="$landRegisterOfficeLine"/>
+                <xsl:with-param name="landRegisterOfficeWebsite" select="$landRegisterOfficeWebsite"/>
+            </xsl:call-template>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="insertOwnershipInformationTitle">
+        <fo:block-container
+                absolute-position="absolute"
+                top="{$land-description-title-line-box-top}"
+                left="0mm"
+                width="100%"
+                height="{$land-description-title-box-height}">
+            <fo:block font-size="{$land-description-title-font-size}" font-weight="700" line-height="{$land-description-title-line-height}">
+                <xsl:value-of select="$localeXml/data[@name='OwnershipInformation.Title']/value/text()"/>
+            </fo:block>
+        </fo:block-container>
+    </xsl:template>
+
+    <xsl:template name="insertOwnershipInformationLandRegisterOfficeSection">
+        <xsl:param name="landRegisterOfficeLine" as="xs:string"/>
+        <xsl:param name="landRegisterOfficeWebsite" as="xs:string"/>
+
+        <xsl:call-template name="renderOfficeSection">
+            <xsl:with-param name="label" select="$localeXml/data[@name='LandDescription.ResponsibleOffice.Title']/value/text()"/>
+            <xsl:with-param name="officeLine" select="$landRegisterOfficeLine"/>
+            <xsl:with-param name="officeWebsite" select="$landRegisterOfficeWebsite"/>
+            <xsl:with-param name="spaceBefore" select="'0mm'"/>
+        </xsl:call-template>
     </xsl:template>
 
     <xsl:template name="insertLandDescriptionTitle">
@@ -576,7 +628,7 @@
                     <xsl:sort select="av:landCoverSortKey(current-grouping-key())" data-type="number"/>
                     <xsl:sort select="count($landCovers[. &lt;&lt; current-group()[1]]) + 1" data-type="number"/>
 
-                    <xsl:variable name="areaSum" as="xs:decimal" select="av:sumAreas(current-group()/data:Area)"/>
+                    <xsl:variable name="areaSum" as="xs:decimal" select="av:sumAreas(current-group()/data:AreaShare)"/>
                     <xsl:variable name="typeLabel" as="xs:string"
                                   select="av:extractMultilingualText(current-group()[1]/data:Type/data:Text/data:LocalisedText, $locale)"/>
 
@@ -677,23 +729,39 @@
         <xsl:param name="responsibleOfficeLine" as="xs:string"/>
         <xsl:param name="responsibleOfficeWebsite" as="xs:string"/>
 
-        <xsl:call-template name="renderLandDescriptionSectionHeading">
+        <xsl:call-template name="renderOfficeSection">
             <xsl:with-param name="label" select="$localeXml/data[@name='LandDescription.ResponsibleOffice.Title']/value/text()"/>
+            <xsl:with-param name="officeLine" select="$responsibleOfficeLine"/>
+            <xsl:with-param name="officeWebsite" select="$responsibleOfficeWebsite"/>
+        </xsl:call-template>
+    </xsl:template>
+
+    <xsl:template name="renderOfficeSection">
+        <xsl:param name="label" as="xs:string?"/>
+        <xsl:param name="officeLine" as="xs:string"/>
+        <xsl:param name="officeWebsite" as="xs:string"/>
+        <xsl:param name="spaceBefore" as="xs:string" select="$land-description-section-gap"/>
+
+        <xsl:call-template name="renderLandDescriptionSectionHeading">
+            <xsl:with-param name="label" select="$label"/>
+            <xsl:with-param name="spaceBefore" select="$spaceBefore"/>
             <xsl:with-param name="fontSize" select="$land-description-responsible-office-heading-font-size"/>
             <xsl:with-param name="lineHeight" select="$land-description-responsible-office-heading-line-height"/>
             <xsl:with-param name="spaceAfter" select="$land-description-responsible-office-heading-gap"/>
         </xsl:call-template>
 
-        <fo:block font-size="{$land-description-responsible-office-font-size}"
-                  line-height="{$land-description-responsible-office-line-height}">
-            <xsl:value-of select="$responsibleOfficeLine"/>
-        </fo:block>
-        <xsl:if test="normalize-space($responsibleOfficeWebsite)">
+        <xsl:if test="normalize-space($officeLine)">
+            <fo:block font-size="{$land-description-responsible-office-font-size}"
+                      line-height="{$land-description-responsible-office-line-height}">
+                <xsl:value-of select="$officeLine"/>
+            </fo:block>
+        </xsl:if>
+        <xsl:if test="normalize-space($officeWebsite)">
             <fo:block font-size="{$land-description-responsible-office-font-size}"
                       line-height="{$land-description-responsible-office-line-height}">
                 <fo:basic-link text-decoration="none" color="{$land-description-link-color}"
-                               external-destination="{concat(&quot;url('&quot;, normalize-space($responsibleOfficeWebsite), &quot;')&quot;)}">
-                    <xsl:value-of select="$responsibleOfficeWebsite"/>
+                               external-destination="{concat(&quot;url('&quot;, normalize-space($officeWebsite), &quot;')&quot;)}">
+                    <xsl:value-of select="$officeWebsite"/>
                 </fo:basic-link>
             </fo:block>
         </xsl:if>
@@ -944,8 +1012,8 @@
                 "/>
     </xsl:function>
 
-    <xsl:function name="av:formatResponsibleOfficeLine" as="xs:string">
-        <xsl:param name="office" as="element(data:ResponsibleOffice)?"/>
+    <xsl:function name="av:formatOfficeLine" as="xs:string">
+        <xsl:param name="office" as="element()?"/>
         <xsl:param name="requestedLocale" as="xs:string"/>
 
         <xsl:variable name="officeName" as="xs:string"

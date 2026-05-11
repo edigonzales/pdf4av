@@ -30,10 +30,12 @@
 			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o108">
 				<AV_WebService_V1_0:NBIdent>BE0200000108</AV_WebService_V1_0:NBIdent>
 				<AV_WebService_V1_0:AV>https://nfg.gonzales.com</AV_WebService_V1_0:AV>
+				<AV_WebService_V1_0:GB>https://geo.so.ch/standortkarte/index.html?egid=376404</AV_WebService_V1_0:GB>
 			</AV_WebService_V1_0:ZustaendigeStelle>
 			<AV_WebService_V1_0:ZustaendigeStelle ili:tid="o115">
 				<AV_WebService_V1_0:NBIdent>BE0200000115</AV_WebService_V1_0:NBIdent>
-				<AV_WebService_V1_0:AV>Geometerbüro Qwertz</AV_WebService_V1_0:AV>
+				<AV_WebService_V1_0:AV>https://nfg.qwertz.com</AV_WebService_V1_0:AV>
+				<AV_WebService_V1_0:GB>https://geo.so.ch/standortkarte/index.html?egid=376404</AV_WebService_V1_0:GB>
 			</AV_WebService_V1_0:ZustaendigeStelle>
 		
           </AV_WebService_V1_0:Konfiguration>

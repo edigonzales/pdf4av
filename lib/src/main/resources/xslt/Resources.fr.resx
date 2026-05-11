@@ -36,6 +36,9 @@
     <data name="LandDescription.Title">
         <value>Grundstückbeschreibung</value>
     </data>
+    <data name="OwnershipInformation.Title">
+        <value>Renseignement sur la propriété</value>
+    </data>
     <data name="LandDescription.LandCover.Title">
         <value>Bodenbedeckungsanteile</value>
     </data>
