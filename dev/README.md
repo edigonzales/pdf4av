@@ -1,5 +1,5 @@
 ```
-jbang avws.java --server.port=8080 \
+jbang run --deps ch.so.agi:pdf4av:0.0.1-SNAPSHOT avws.java --server.port=8080 \
   --spring.datasource.url=jdbc:postgresql://localhost:54321/edit \
   --spring.datasource.username=ddluser \
   --spring.datasource.password=ddluser \
@@ -11,12 +11,13 @@ jbang avws.java --server.port=8080 \
   --avws.tmpdir=/tmp \
   --avws.cadastreAuthorityUrl=https://agi.so.ch \
   --avws.webAppUrl="https://geo.so.ch/map/?oereb_egrid=" \
-  --avws.canton=Solothurn\
   --avws.subUnitOfLandRegisterDesignation=GB-Gemeinde \
   --avws.planForMainPage="https://geodienste.ch/db/av_situationsplan_0/deu?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=daten&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&MAP_RESOLUTION=100&DPI=96&OPACITIES=255&t=675&WIDTH=1920&HEIGHT=710&BBOX=2607051.2375,1228517.0374999999,2608067.2375,1228892.7458333333" \
   --avws.planForLandDescription="https://geodienste.ch/db/av_situationsplan_0/deu?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=daten&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&MAP_RESOLUTION=100&DPI=96&OPACITIES=255&t=675&WIDTH=1920&HEIGHT=710&BBOX=2607051.2375,1228517.0374999999,2608067.2375,1228892.7458333333" \
   --avws.planForProjectedObjects="https://geodienste.ch/db/av_situationsplan_0/deu?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=daten&STYLES=&SRS=EPSG%3A2056&CRS=EPSG%3A2056&TILED=false&MAP_RESOLUTION=100&DPI=96&OPACITIES=255&t=675&WIDTH=1920&HEIGHT=710&BBOX=2607051.2375,1228517.0374999999,2608067.2375,1228892.7458333333"
 ```
+
+`--deps` braucht es weil. jbang die `+`-Syntax nicht versteht.
 
 Noch nicht ganz sicher: Vielleicht muss man bei Snapshots manuell das lokale maven repo löschen.
 
@@ -79,6 +80,14 @@ proj geb (auf zwei Liegenschaften) CH834642351474:
 ```
 curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGRID=CH834642351474&GEOMETRY=true&WITHIMAGES=true&PROVISIONAL=true" -o CH834642351474_mit_proj_geb.xml 
 ```
+
+
+```
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH843546415105.xml --out /Users/stefan/tmp"
+
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH994641443597.xml --out /Users/stefan/tmp"
+```
+
 
 
 Projektierte Liegenschaften (die ersten beiden):
