@@ -464,8 +464,22 @@
     <xsl:template name="insertLandDescriptionSection">
         <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
 
-        <xsl:variable name="landCovers" as="element(data:LandCover)*" select="$realEstate/data:LandCover"/>
-        <xsl:variable name="buildings" as="element(data:Building)*" select="$realEstate/data:Building"/>
+        <xsl:variable name="landCovers" as="element(data:LandCover)*"
+                      select="$realEstate/data:LandCover[av:isRealObjectStatus(data:Objectstatus)]"/>
+        <xsl:variable name="realBuildingCandidates" as="element(data:Building)*"
+                      select="$realEstate/data:Building[
+                          let $egid := normalize-space(data:EGID)
+                          return $egid and (
+                              exists($realEstate/data:LandCover[
+                                  normalize-space(data:EGID) = $egid
+                                  and av:isRealObjectStatus(data:Objectstatus)
+                              ])
+                              or exists($realEstate/data:SingleObject[
+                                  normalize-space(data:EGID) = $egid
+                                  and av:isRealObjectStatus(data:Objectstatus)
+                              ])
+                          )
+                      ]"/>
         <xsl:variable name="responsibleOffice" as="element(data:ResponsibleOffice)?" select="$realEstate/data:ResponsibleOffice"/>
         <xsl:variable name="responsibleOfficeLine" as="xs:string"
                       select="av:formatOfficeLine($responsibleOffice, $locale)"/>
@@ -487,10 +501,10 @@
             </xsl:call-template>
         </xsl:if>
 
-        <xsl:if test="exists($buildings)">
+        <xsl:if test="exists($realBuildingCandidates)">
             <xsl:call-template name="insertLandDescriptionBuildingsSection">
                 <xsl:with-param name="realEstate" select="$realEstate"/>
-                <xsl:with-param name="buildings" select="$buildings"/>
+                <xsl:with-param name="buildings" select="$realBuildingCandidates"/>
             </xsl:call-template>
         </xsl:if>
 
@@ -529,13 +543,42 @@
         <xsl:variable name="mutations" as="element(data:Mutation)*" select="$realEstate/data:Mutation"/>
         <xsl:variable name="projectedProperties" as="element(data:projectedProperty)*"
                       select="$mutations/data:projectedProperty"/>
+        <xsl:variable name="plannedLandCoverBuildings" as="element(data:Building)*"
+                      select="$realEstate/data:Building[
+                          let $egid := normalize-space(data:EGID)
+                          return $egid and exists(
+                              $realEstate/data:LandCover[
+                                  normalize-space(data:EGID) = $egid
+                                  and av:isPlannedObjectStatus(data:Objectstatus)
+                              ]
+                          )
+                      ]"/>
+        <xsl:variable name="plannedSingleObjectBuildings" as="element(data:Building)*"
+                      select="$realEstate/data:Building[
+                          let $egid := normalize-space(data:EGID)
+                          return $egid
+                                 and not(exists(
+                                     $realEstate/data:LandCover[
+                                         normalize-space(data:EGID) = $egid
+                                         and av:isPlannedObjectStatus(data:Objectstatus)
+                                     ]
+                                 ))
+                                 and exists(
+                                     $realEstate/data:SingleObject[
+                                         normalize-space(data:EGID) = $egid
+                                         and av:isPlannedObjectStatus(data:Objectstatus)
+                                     ]
+                                 )
+                      ]"/>
+        <xsl:variable name="projectedBuildings" as="element(data:Building)*"
+                      select="($plannedLandCoverBuildings, $plannedSingleObjectBuildings)"/>
         <xsl:variable name="responsibleOffice" as="element(data:ResponsibleOffice)?" select="$realEstate/data:ResponsibleOffice"/>
         <xsl:variable name="responsibleOfficeLine" as="xs:string"
                       select="av:formatOfficeLine($responsibleOffice, $locale)"/>
         <xsl:variable name="responsibleOfficeWebsite" as="xs:string"
                       select="av:extractMultilingualText($responsibleOffice/data:OfficeAtWeb/data:LocalisedText, $locale)"/>
 
-        <xsl:if test="exists($mutations)">
+        <xsl:if test="exists($projectedProperties) or exists($projectedBuildings)">
             <fo:block break-before="page"/>
             <fo:block-container height="{$land-description-top-layout-height}">
                 <xsl:call-template name="insertProjectedObjectsTitle"/>
@@ -544,58 +587,67 @@
                 </xsl:call-template>
             </fo:block-container>
 
-            <xsl:call-template name="renderLandDescriptionSectionHeading">
-                <xsl:with-param name="label" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Title']/value/text()"/>
-            </xsl:call-template>
+            <xsl:if test="exists($projectedProperties)">
+                <xsl:call-template name="renderLandDescriptionSectionHeading">
+                    <xsl:with-param name="label" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Title']/value/text()"/>
+                </xsl:call-template>
 
-            <fo:table table-layout="fixed" width="{$plan-width}" font-size="{$land-description-table-font-size}">
-                <xsl:call-template name="applyDebugTableAttributes"/>
-                <fo:table-column column-width="{$projected-objects-number-width}"/>
-                <fo:table-column column-width="{$projected-objects-egrid-width}"/>
-                <fo:table-column column-width="{$projected-objects-type-width}"/>
-                <fo:table-column column-width="{$projected-objects-previous-area-width}"/>
-                <fo:table-column column-width="{$projected-objects-new-area-width}"/>
-                <fo:table-header>
-                    <fo:table-row>
-                        <xsl:call-template name="applyDebugTableRowAttributes"/>
-                        <xsl:call-template name="renderLandDescriptionHeaderCell">
-                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Number']/value/text()"/>
-                        </xsl:call-template>
-                        <xsl:call-template name="renderLandDescriptionHeaderCell">
-                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Egrid']/value/text()"/>
-                        </xsl:call-template>
-                        <xsl:call-template name="renderLandDescriptionHeaderCell">
-                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Type']/value/text()"/>
-                        </xsl:call-template>
-                        <xsl:call-template name="renderLandDescriptionHeaderCell">
-                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.PreviousArea']/value/text()"/>
-                            <xsl:with-param name="textAlign" select="'right'"/>
-                        </xsl:call-template>
-                        <xsl:call-template name="renderLandDescriptionHeaderCell">
-                            <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.NewArea']/value/text()"/>
-                            <xsl:with-param name="textAlign" select="'right'"/>
-                        </xsl:call-template>
-                    </fo:table-row>
-                </fo:table-header>
-                <fo:table-body>
-                    <xsl:for-each select="$projectedProperties">
-                        <xsl:variable name="egrid" as="xs:string" select="normalize-space(data:EGRID)"/>
-                        <xsl:variable name="previousArea" as="xs:string"
-                                      select="if ($egrid = normalize-space($realEstate/data:EGRID))
-                                              then av:formatSwissArea($realEstate/data:LandRegistryArea)
-                                              else ''"/>
+                <fo:table table-layout="fixed" width="{$plan-width}" font-size="{$land-description-table-font-size}">
+                    <xsl:call-template name="applyDebugTableAttributes"/>
+                    <fo:table-column column-width="{$projected-objects-number-width}"/>
+                    <fo:table-column column-width="{$projected-objects-egrid-width}"/>
+                    <fo:table-column column-width="{$projected-objects-type-width}"/>
+                    <fo:table-column column-width="{$projected-objects-previous-area-width}"/>
+                    <fo:table-column column-width="{$projected-objects-new-area-width}"/>
+                    <fo:table-header>
+                        <fo:table-row>
+                            <xsl:call-template name="applyDebugTableRowAttributes"/>
+                            <xsl:call-template name="renderLandDescriptionHeaderCell">
+                                <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Number']/value/text()"/>
+                            </xsl:call-template>
+                            <xsl:call-template name="renderLandDescriptionHeaderCell">
+                                <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Egrid']/value/text()"/>
+                            </xsl:call-template>
+                            <xsl:call-template name="renderLandDescriptionHeaderCell">
+                                <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.Type']/value/text()"/>
+                            </xsl:call-template>
+                            <xsl:call-template name="renderLandDescriptionHeaderCell">
+                                <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.PreviousArea']/value/text()"/>
+                                <xsl:with-param name="textAlign" select="'right'"/>
+                            </xsl:call-template>
+                            <xsl:call-template name="renderLandDescriptionHeaderCell">
+                                <xsl:with-param name="title" select="$localeXml/data[@name='ProjectedObjects.ProjectedProperties.NewArea']/value/text()"/>
+                                <xsl:with-param name="textAlign" select="'right'"/>
+                            </xsl:call-template>
+                        </fo:table-row>
+                    </fo:table-header>
+                    <fo:table-body>
+                        <xsl:for-each select="$projectedProperties">
+                            <xsl:variable name="egrid" as="xs:string" select="normalize-space(data:EGRID)"/>
+                            <xsl:variable name="previousArea" as="xs:string"
+                                          select="if ($egrid = normalize-space($realEstate/data:EGRID))
+                                                  then av:formatSwissArea($realEstate/data:LandRegistryArea)
+                                                  else ''"/>
 
-                        <xsl:call-template name="renderProjectedObjectsPropertyRow">
-                            <xsl:with-param name="number" select="normalize-space(data:Number)"/>
-                            <xsl:with-param name="egrid" select="$egrid"/>
-                            <xsl:with-param name="typeLabel"
-                                            select="av:extractMultilingualText(data:Type/data:Text/data:LocalisedText, $locale)"/>
-                            <xsl:with-param name="previousArea" select="$previousArea"/>
-                            <xsl:with-param name="newArea" select="av:formatSwissArea(data:newParcelArea)"/>
-                        </xsl:call-template>
-                    </xsl:for-each>
-                </fo:table-body>
-            </fo:table>
+                            <xsl:call-template name="renderProjectedObjectsPropertyRow">
+                                <xsl:with-param name="number" select="normalize-space(data:Number)"/>
+                                <xsl:with-param name="egrid" select="$egrid"/>
+                                <xsl:with-param name="typeLabel"
+                                                select="av:extractMultilingualText(data:Type/data:Text/data:LocalisedText, $locale)"/>
+                                <xsl:with-param name="previousArea" select="$previousArea"/>
+                                <xsl:with-param name="newArea" select="av:formatSwissArea(data:newParcelArea)"/>
+                            </xsl:call-template>
+                        </xsl:for-each>
+                    </fo:table-body>
+                </fo:table>
+            </xsl:if>
+
+            <xsl:if test="exists($projectedBuildings)">
+                <xsl:call-template name="insertProjectedObjectsBuildingsSection">
+                    <xsl:with-param name="realEstate" select="$realEstate"/>
+                    <xsl:with-param name="buildings" select="$projectedBuildings"/>
+                </xsl:call-template>
+            </xsl:if>
 
             <xsl:if test="normalize-space($responsibleOfficeLine) or normalize-space($responsibleOfficeWebsite)">
                 <xsl:call-template name="renderOfficeSection">
@@ -882,6 +934,82 @@
         </fo:table>
     </xsl:template>
 
+    <xsl:template name="insertProjectedObjectsBuildingsSection">
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+        <xsl:param name="buildings" as="element(data:Building)*"/>
+
+        <xsl:call-template name="renderLandDescriptionSectionHeading">
+            <xsl:with-param name="label" select="$localeXml/data[@name='ProjectedObjects.ProjectedBuildings.Title']/value/text()"/>
+        </xsl:call-template>
+
+        <fo:table table-layout="fixed" width="{$plan-width}" font-size="{$land-description-table-font-size}">
+            <xsl:call-template name="applyDebugTableAttributes"/>
+            <fo:table-column column-width="{$land-description-building-type-width}"/>
+            <fo:table-column column-width="{$land-description-building-egid-width}"/>
+            <fo:table-column column-width="{$land-description-building-address-width}"/>
+            <fo:table-column column-width="{$land-description-building-zip-width}"/>
+            <fo:table-column column-width="{$land-description-building-city-width}"/>
+            <fo:table-header>
+                <fo:table-row>
+                    <xsl:call-template name="applyDebugTableRowAttributes"/>
+                    <xsl:call-template name="renderLandDescriptionHeaderCell">
+                        <xsl:with-param name="title" select="$localeXml/data[@name='LandDescription.Buildings.Type']/value/text()"/>
+                        <xsl:with-param name="subtitle" select="'Bezeichnung'"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="renderLandDescriptionHeaderCell">
+                        <xsl:with-param name="title" select="$localeXml/data[@name='LandDescription.Buildings.Egid']/value/text()"/>
+                        <xsl:with-param name="subtitle" select="$localeXml/data[@name='LandDescription.Buildings.EgidLong']/value/text()"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="renderLandDescriptionHeaderCell">
+                        <xsl:with-param name="title" select="$localeXml/data[@name='LandDescription.Buildings.Address']/value/text()"/>
+                        <xsl:with-param name="subtitle" select="$localeXml/data[@name='LandDescription.Buildings.AddressLong']/value/text()"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="renderLandDescriptionHeaderCell">
+                        <xsl:with-param name="title" select="$localeXml/data[@name='LandDescription.Buildings.Zip']/value/text()"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="renderProjectedBuildingCityAreaHeaderCell">
+                        <xsl:with-param name="cityLabel" select="$localeXml/data[@name='LandDescription.Buildings.City']/value/text()"/>
+                        <xsl:with-param name="areaLabel" select="$localeXml/data[@name='ProjectedObjects.ProjectedBuildings.Area']/value/text()"/>
+                    </xsl:call-template>
+                </fo:table-row>
+            </fo:table-header>
+            <fo:table-body>
+                <xsl:for-each select="$buildings">
+                    <xsl:variable name="building" as="element(data:Building)" select="."/>
+                    <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+                    <xsl:variable name="typeLabel" as="xs:string"
+                                  select="av:projectedBuildingTypeLabel($building, $realEstate, $locale)"/>
+                    <xsl:variable name="areaShare" as="xs:string"
+                                  select="av:projectedBuildingAreaLabel($building, $realEstate)"/>
+                    <xsl:variable name="entrances" as="element(data:BuildingEntrance)*"
+                                  select="$building/data:BuildingEntrance"/>
+
+                    <xsl:choose>
+                        <xsl:when test="exists($entrances)">
+                            <xsl:for-each select="$entrances">
+                                <xsl:call-template name="renderProjectedBuildingRow">
+                                    <xsl:with-param name="typeLabel" select="if (position() = 1) then $typeLabel else ''"/>
+                                    <xsl:with-param name="egid" select="if (position() = 1) then $egid else ''"/>
+                                    <xsl:with-param name="address" select="av:formatAddressLine(data:Street, data:Number)"/>
+                                    <xsl:with-param name="postalCode" select="normalize-space(data:PostalCode)"/>
+                                    <xsl:with-param name="city" select="normalize-space(data:City)"/>
+                                    <xsl:with-param name="area" select="if (position() = 1) then $areaShare else ''"/>
+                                </xsl:call-template>
+                            </xsl:for-each>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:call-template name="renderProjectedBuildingRow">
+                                <xsl:with-param name="typeLabel" select="$typeLabel"/>
+                                <xsl:with-param name="egid" select="$egid"/>
+                                <xsl:with-param name="area" select="$areaShare"/>
+                            </xsl:call-template>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:for-each>
+            </fo:table-body>
+        </fo:table>
+    </xsl:template>
+
     <xsl:template name="insertLandDescriptionResponsibleOfficeSection">
         <xsl:param name="responsibleOfficeLine" as="xs:string"/>
         <xsl:param name="responsibleOfficeWebsite" as="xs:string"/>
@@ -998,6 +1126,109 @@
                     <xsl:value-of select="$city"/>
                 </fo:block>
             </fo:table-cell>
+        </fo:table-row>
+    </xsl:template>
+
+    <xsl:template name="renderProjectedBuildingCityAreaHeaderCell">
+        <xsl:param name="cityLabel" as="xs:string?"/>
+        <xsl:param name="areaLabel" as="xs:string?"/>
+
+        <fo:table-cell padding-bottom="1mm" border-bottom="{$land-description-table-rule} solid black">
+            <xsl:call-template name="applyDebugTableCellAttributes"/>
+            <fo:table table-layout="fixed" width="100%">
+                <xsl:call-template name="applyDebugTableAttributes"/>
+                <fo:table-column column-width="19mm"/>
+                <fo:table-column column-width="16mm"/>
+                <fo:table-body>
+                    <fo:table-row>
+                        <xsl:call-template name="applyDebugTableRowAttributes"/>
+                        <fo:table-cell>
+                            <xsl:call-template name="applyDebugTableCellAttributes"/>
+                            <fo:block font-size="{$land-description-table-font-size}" font-weight="700" line-height="11pt">
+                                <xsl:value-of select="$cityLabel"/>
+                            </fo:block>
+                        </fo:table-cell>
+                        <fo:table-cell>
+                            <xsl:call-template name="applyDebugTableCellAttributes"/>
+                            <fo:block text-align="right" font-size="{$land-description-table-font-size}" font-weight="700" line-height="11pt">
+                                <xsl:value-of select="$areaLabel"/>
+                            </fo:block>
+                        </fo:table-cell>
+                    </fo:table-row>
+                </fo:table-body>
+            </fo:table>
+        </fo:table-cell>
+    </xsl:template>
+
+    <xsl:template name="renderProjectedBuildingCityAreaCell">
+        <xsl:param name="city" as="xs:string" select="''"/>
+        <xsl:param name="area" as="xs:string" select="''"/>
+
+        <fo:table-cell>
+            <xsl:call-template name="applyDebugTableCellAttributes"/>
+            <fo:table table-layout="fixed" width="100%">
+                <xsl:call-template name="applyDebugTableAttributes"/>
+                <fo:table-column column-width="19mm"/>
+                <fo:table-column column-width="16mm"/>
+                <fo:table-body>
+                    <fo:table-row>
+                        <xsl:call-template name="applyDebugTableRowAttributes"/>
+                        <fo:table-cell>
+                            <xsl:call-template name="applyDebugTableCellAttributes"/>
+                            <fo:block>
+                                <xsl:value-of select="$city"/>
+                            </fo:block>
+                        </fo:table-cell>
+                        <fo:table-cell>
+                            <xsl:call-template name="applyDebugTableCellAttributes"/>
+                            <fo:block text-align="right" line-height-shift-adjustment="disregard-shifts">
+                                <xsl:value-of select="$area"/>
+                            </fo:block>
+                        </fo:table-cell>
+                    </fo:table-row>
+                </fo:table-body>
+            </fo:table>
+        </fo:table-cell>
+    </xsl:template>
+
+    <xsl:template name="renderProjectedBuildingRow">
+        <xsl:param name="typeLabel" as="xs:string" select="''"/>
+        <xsl:param name="egid" as="xs:string" select="''"/>
+        <xsl:param name="address" as="xs:string" select="''"/>
+        <xsl:param name="postalCode" as="xs:string" select="''"/>
+        <xsl:param name="city" as="xs:string" select="''"/>
+        <xsl:param name="area" as="xs:string" select="''"/>
+
+        <fo:table-row border-bottom="{$land-description-table-rule} solid black" vertical-align="middle" line-height="{$land-description-row-height}">
+            <xsl:call-template name="applyDebugTableRowAttributes"/>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$typeLabel"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$egid"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$address"/>
+                </fo:block>
+            </fo:table-cell>
+            <fo:table-cell>
+                <xsl:call-template name="applyDebugTableCellAttributes"/>
+                <fo:block>
+                    <xsl:value-of select="$postalCode"/>
+                </fo:block>
+            </fo:table-cell>
+            <xsl:call-template name="renderProjectedBuildingCityAreaCell">
+                <xsl:with-param name="city" select="$city"/>
+                <xsl:with-param name="area" select="$area"/>
+            </xsl:call-template>
         </fo:table-row>
     </xsl:template>
 
@@ -1125,15 +1356,126 @@
                 )[1]))"/>
     </xsl:function>
 
+    <xsl:function name="av:isRealObjectStatus" as="xs:boolean">
+        <xsl:param name="objectStatus" as="item()*"/>
+
+        <xsl:variable name="statusCode" as="xs:string"
+                      select="lower-case(normalize-space(string(($objectStatus/data:Code)[1])))"/>
+        <xsl:variable name="statusText" as="xs:string"
+                      select="lower-case(normalize-space(string(($objectStatus)[1])))"/>
+
+        <xsl:sequence select="$statusCode = ('actual', 'real') or ($statusCode = '' and $statusText = 'real')"/>
+    </xsl:function>
+
+    <xsl:function name="av:isPlannedObjectStatus" as="xs:boolean">
+        <xsl:param name="objectStatus" as="item()*"/>
+
+        <xsl:variable name="statusCode" as="xs:string"
+                      select="lower-case(normalize-space(string(($objectStatus/data:Code)[1])))"/>
+        <xsl:variable name="statusText" as="xs:string"
+                      select="lower-case(normalize-space(string(($objectStatus)[1])))"/>
+
+        <xsl:sequence
+                select="$statusCode = ('planned', 'projected')
+                        or ($statusCode = '' and $statusText = ('planned', 'projektiert'))"/>
+    </xsl:function>
+
+    <xsl:function name="av:projectedBuildingTypeLabel" as="xs:string">
+        <xsl:param name="building" as="element(data:Building)"/>
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+        <xsl:param name="requestedLocale" as="xs:string"/>
+
+        <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+
+        <xsl:sequence
+                select="
+                    if ($egid and exists(
+                            $realEstate/data:LandCover[
+                                normalize-space(data:EGID) = $egid
+                                and av:isPlannedObjectStatus(data:Objectstatus)
+                            ]
+                        ))
+                    then av:extractMultilingualText(
+                        $realEstate/data:LandCover[
+                            normalize-space(data:EGID) = $egid
+                            and av:isPlannedObjectStatus(data:Objectstatus)
+                        ][1]/data:Type/data:Text/data:LocalisedText,
+                        $requestedLocale
+                    )
+                    else if ($egid and exists(
+                            $realEstate/data:SingleObject[
+                                normalize-space(data:EGID) = $egid
+                                and av:isPlannedObjectStatus(data:Objectstatus)
+                            ]
+                        ))
+                    then av:extractMultilingualText(
+                        $realEstate/data:SingleObject[
+                            normalize-space(data:EGID) = $egid
+                            and av:isPlannedObjectStatus(data:Objectstatus)
+                        ][1]/data:Type/data:Text/data:LocalisedText,
+                        $requestedLocale
+                    )
+                    else 'Gebäude'
+                "/>
+    </xsl:function>
+
+    <xsl:function name="av:projectedBuildingAreaLabel" as="xs:string">
+        <xsl:param name="building" as="element(data:Building)"/>
+        <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
+
+        <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
+        <xsl:variable name="landCoverAreaShare" as="item()*"
+                      select="
+                        if ($egid)
+                        then (
+                            $realEstate/data:LandCover[
+                                normalize-space(data:EGID) = $egid
+                                and av:isPlannedObjectStatus(data:Objectstatus)
+                            ]/data:AreaShare[normalize-space(.)]
+                        )[1]
+                        else ()
+                      "/>
+        <xsl:variable name="singleObjectAreaShare" as="item()*"
+                      select="
+                        if ($egid)
+                        then (
+                            $realEstate/data:SingleObject[
+                                normalize-space(data:EGID) = $egid
+                                and av:isPlannedObjectStatus(data:Objectstatus)
+                            ]/data:AreaShare[normalize-space(.)]
+                        )[1]
+                        else ()
+                      "/>
+
+        <xsl:sequence
+                select="
+                    if (exists($landCoverAreaShare))
+                    then av:formatSwissArea($landCoverAreaShare)
+                    else if (exists($singleObjectAreaShare))
+                    then av:formatSwissArea($singleObjectAreaShare)
+                    else ''
+                "/>
+    </xsl:function>
+
     <xsl:function name="av:buildingOrigin" as="xs:string">
         <xsl:param name="building" as="element(data:Building)"/>
         <xsl:param name="realEstate" as="element(data:RealEstate_DPR)?"/>
 
         <xsl:variable name="egid" as="xs:string" select="normalize-space($building/data:EGID)"/>
         <xsl:variable name="landCoverMatches" as="element(data:LandCover)*"
-                      select="if ($egid) then $realEstate/data:LandCover[normalize-space(data:EGID) = $egid] else ()"/>
+                      select="if ($egid)
+                              then $realEstate/data:LandCover[
+                                  normalize-space(data:EGID) = $egid
+                                  and av:isRealObjectStatus(data:Objectstatus)
+                              ]
+                              else ()"/>
         <xsl:variable name="singleObjectMatches" as="element(data:SingleObject)*"
-                      select="if ($egid) then $realEstate/data:SingleObject[normalize-space(data:EGID) = $egid] else ()"/>
+                      select="if ($egid)
+                              then $realEstate/data:SingleObject[
+                                  normalize-space(data:EGID) = $egid
+                                  and av:isRealObjectStatus(data:Objectstatus)
+                              ]
+                              else ()"/>
 
         <xsl:sequence
                 select="
@@ -1156,12 +1498,18 @@
                 select="
                     if ($origin = 'landcover')
                     then av:extractMultilingualText(
-                        $realEstate/data:LandCover[normalize-space(data:EGID) = $egid][1]/data:Type/data:Text/data:LocalisedText,
+                        $realEstate/data:LandCover[
+                            normalize-space(data:EGID) = $egid
+                            and av:isRealObjectStatus(data:Objectstatus)
+                        ][1]/data:Type/data:Text/data:LocalisedText,
                         $requestedLocale
                     )
                     else if ($origin = 'singleobject')
                     then av:extractMultilingualText(
-                        $realEstate/data:SingleObject[normalize-space(data:EGID) = $egid][1]/data:Type/data:Text/data:LocalisedText,
+                        $realEstate/data:SingleObject[
+                            normalize-space(data:EGID) = $egid
+                            and av:isRealObjectStatus(data:Objectstatus)
+                        ][1]/data:Type/data:Text/data:LocalisedText,
                         $requestedLocale
                     )
                     else 'Gebäude'

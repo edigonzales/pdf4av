@@ -86,6 +86,8 @@ curl -X GET -H "Accept: application/xml" "http://localhost:8080/extract/xml/?EGR
 ./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH843546415105.xml --out /Users/stefan/tmp"
 
 ./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH994641443597.xml --out /Users/stefan/tmp"
+
+./gradlew :app:run --args="--xml /Users/stefan/sources/pdf4av/examples/CH834642351474_mit_proj_geb.xml --out /Users/stefan/tmp"
 ```
 
 

@@ -60,6 +60,12 @@
     <data name="ProjectedObjects.ProjectedProperties.NewArea">
         <value>Neue Fläche</value>
     </data>
+    <data name="ProjectedObjects.ProjectedBuildings.Title">
+        <value>Projektierte Gebäude und Bauten</value>
+    </data>
+    <data name="ProjectedObjects.ProjectedBuildings.Area">
+        <value>Fläche</value>
+    </data>
     <data name="LandDescription.LandCover.Title">
         <value>Bodenbedeckungsanteile</value>
     </data>

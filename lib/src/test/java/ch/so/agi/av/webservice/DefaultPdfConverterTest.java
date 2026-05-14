@@ -42,7 +42,7 @@ class DefaultPdfConverterTest {
         assertTrue(Files.size(result.outputFile()) > 0);
 
         try (PDDocument pdfDocument = Loader.loadPDF(result.outputFile().toFile())) {
-            assertEquals(3, pdfDocument.getNumberOfPages());
+            assertEquals(4, pdfDocument.getNumberOfPages());
         }
     }
 
@@ -148,30 +148,60 @@ class DefaultPdfConverterTest {
         ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        int landDescriptionStart = fo.indexOf("Grundstückbeschreibung");
+        int projectedObjectsStart = fo.indexOf("Projektierte Objekte", landDescriptionStart);
+        String landDescriptionBlock = projectedObjectsStart >= 0
+                ? fo.substring(landDescriptionStart, projectedObjectsStart)
+                : fo.substring(landDescriptionStart);
+
         assertTrue(fo.contains("Grundstückbeschreibung"));
         assertTrue(fo.contains("Eigentumsauskunft"));
         assertTrue(fo.contains("PlanForLandDescription"));
-        assertTrue(fo.contains("Bodenbedeckungsanteile"));
-        assertTrue(fo.contains("Gebäude und Bauten"));
-        assertTrue(fo.contains("Zuständige Stelle"));
+        assertTrue(landDescriptionBlock.contains("Bodenbedeckungsanteile"));
+        assertTrue(landDescriptionBlock.contains("Gebäude und Bauten"));
+        assertTrue(landDescriptionBlock.contains("Zuständige Stelle"));
         assertTrue(fo.contains("Amtschreiberei Olten-Gösgen, Amthausquai 23, 4601 Olten"));
         assertTrue(fo.contains("https://geo.so.ch/standortkarte/index.html?egid=376404"));
         assertTrue(fo.contains("url('https://geo.so.ch/standortkarte/index.html?egid=376404')"));
-        assertEquals(1, countOccurrences(fo, "2'000 m²"));
-        assertTrue(fo.contains("&lt; 1%"));
-        assertTrue(fo.contains("unterirdisches Gebäude"));
-        assertEquals(1, countOccurrences(fo, "Unterstand"));
-        assertEquals(1, countOccurrences(fo, "2355731"));
-        assertTrue(fo.contains("999999999"));
-        assertTrue(fo.contains("Mühlemattstrasse 36"));
-        assertTrue(fo.contains("Rheinstrasse 42a"));
+        assertEquals(1, countOccurrences(landDescriptionBlock, "2'000 m²"));
+        assertTrue(landDescriptionBlock.contains("&lt; 1%"));
+        assertTrue(landDescriptionBlock.contains("unterirdisches Gebäude"));
+        assertEquals(1, countOccurrences(landDescriptionBlock, "Unterstand"));
+        assertFalse(landDescriptionBlock.contains("Unterstand geplant"));
+        assertFalse(landDescriptionBlock.contains("Geplante Testfläche"));
+        assertEquals(1, countOccurrences(landDescriptionBlock, "2355731"));
+        assertFalse(fo.contains("999999999"));
+        assertTrue(landDescriptionBlock.contains("Mühlemattstrasse 36"));
+        assertTrue(landDescriptionBlock.contains("Rheinstrasse 42a"));
         assertTrue(fo.contains("Jermann Ingenieure und Geometer AG, Gerbegässlein 5, 4450 Sissach"));
         assertTrue(fo.contains("https://www.jermann-ag.ch"));
         assertTrue(fo.contains("url('https://www.jermann-ag.ch')"));
-        assertTrue(fo.indexOf("Eigentumsauskunft") < fo.indexOf("Grundstückbeschreibung"));
-        assertTrue(fo.indexOf("420760") < fo.indexOf("2355661"));
-        assertTrue(fo.indexOf("2355661") < fo.indexOf("2355731"));
-        assertTrue(fo.indexOf("2355731") < fo.indexOf("999999999"));
+        assertTrue(fo.indexOf("Eigentumsauskunft") < landDescriptionStart);
+        assertTrue(landDescriptionBlock.indexOf("420760") < landDescriptionBlock.indexOf("2355661"));
+        assertTrue(landDescriptionBlock.indexOf("2355661") < landDescriptionBlock.indexOf("2355731"));
+    }
+
+    @Test
+    void xmlToFoOmitsLandCoverSectionWhenObjectstatusIsPlannedOnly() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-land-description-planned-only.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, true, false, true, true, false, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-land-description-planned-only");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        int landDescriptionStart = fo.indexOf("Grundstückbeschreibung");
+        int projectedObjectsStart = fo.indexOf("Projektierte Objekte", landDescriptionStart);
+        String landDescriptionBlock = projectedObjectsStart >= 0
+                ? fo.substring(landDescriptionStart, projectedObjectsStart)
+                : fo.substring(landDescriptionStart);
+
+        assertTrue(landDescriptionStart >= 0);
+        assertFalse(landDescriptionBlock.contains("Bodenbedeckungsanteile"));
+        assertFalse(landDescriptionBlock.contains("Gebäude und Bauten"));
     }
 
     @Test
@@ -183,7 +213,7 @@ class DefaultPdfConverterTest {
         ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
-        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
+        assertEquals(3, countOccurrences(fo, "break-before=\"page\""));
         assertTrue(fo.contains("Eigentumsauskunft"));
         assertTrue(fo.contains("height=\"119.62mm\""));
         assertTrue(fo.contains("height=\"20.62mm\""));
@@ -240,7 +270,7 @@ class DefaultPdfConverterTest {
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
         assertTrue(fo.contains("Eigentumsauskunft"));
         assertEquals(1, countOccurrences(fo, "Grundstückbeschreibung"));
-        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
+        assertEquals(3, countOccurrences(fo, "break-before=\"page\""));
         assertTrue(fo.indexOf("Eigentumsauskunft") < fo.indexOf("Grundstückbeschreibung"));
         assertTrue(fo.contains("Amtschreiberei Olten-Gösgen, Amthausquai 23, 4601 Olten"));
         assertTrue(fo.contains("keep-with-next.within-page=\"always\">Zuständige Stelle</fo:block>"));
@@ -258,7 +288,7 @@ class DefaultPdfConverterTest {
         ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
 
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
-        assertEquals(1, countOccurrences(fo, "break-before=\"page\""));
+        assertEquals(2, countOccurrences(fo, "break-before=\"page\""));
         assertFalse(fo.contains("Amtschreiberei Olten-Gösgen"));
         assertTrue(fo.contains("Grundstückbeschreibung"));
     }
@@ -277,6 +307,7 @@ class DefaultPdfConverterTest {
         String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
         assertTrue(fo.contains("Projektierte Objekte"));
         assertTrue(fo.contains("Projektierte Grundstücke"));
+        assertTrue(fo.contains("Projektierte Gebäude und Bauten"));
         assertTrue(fo.contains("PlanForProjectedObjects"));
         assertTrue(fo.contains("Nummer"));
         assertTrue(fo.contains("EGRID"));
@@ -304,12 +335,70 @@ class DefaultPdfConverterTest {
         assertTrue(newRowNewArea > newRowStart);
         assertEquals(-1, fo.substring(newRowStart, newRowNewArea).indexOf("11'171 m²"));
 
-        int responsibleOfficeStart = fo.indexOf("Zuständige Stelle", projectedSectionStart);
+        int projectedBuildingsStart = fo.indexOf("Projektierte Gebäude und Bauten", projectedSectionStart);
+        assertTrue(projectedBuildingsStart > newRowNewArea);
+
+        int responsibleOfficeStart = fo.indexOf("Zuständige Stelle", projectedBuildingsStart);
+        assertTrue(responsibleOfficeStart > projectedBuildingsStart);
+
+        String projectedBuildingsBlock = fo.substring(projectedBuildingsStart, responsibleOfficeStart);
+        assertTrue(projectedBuildingsBlock.contains("Geplante Testfläche"));
+        assertTrue(projectedBuildingsBlock.contains("Unterstand geplant"));
+        assertFalse(projectedBuildingsBlock.contains("unterirdisches Gebäude"));
+        assertFalse(projectedBuildingsBlock.contains("2355661"));
+        assertTrue(projectedBuildingsBlock.contains("Mühlemattstrasse 36"));
+        assertTrue(projectedBuildingsBlock.contains("Rheinstrasse 42a"));
+        assertTrue(projectedBuildingsBlock.contains("Fläche"));
+        assertEquals(1, countOccurrences(projectedBuildingsBlock, "500 m²"));
+        assertEquals(1, countOccurrences(projectedBuildingsBlock, "333 m²"));
+        assertFalse(projectedBuildingsBlock.contains("150 m²"));
+        assertFalse(projectedBuildingsBlock.contains("225 m²"));
+        assertTrue(projectedBuildingsBlock.indexOf("420760") < projectedBuildingsBlock.indexOf("2355731"));
+
         int responsibleOfficeLine = fo.indexOf("Jermann Ingenieure und Geometer AG, Gerbegässlein 5, 4450 Sissach", responsibleOfficeStart);
         int responsibleOfficeWebsite = fo.indexOf("https://www.jermann-ag.ch", responsibleOfficeLine);
-        assertTrue(responsibleOfficeStart > newRowNewArea);
         assertTrue(responsibleOfficeLine > responsibleOfficeStart);
         assertTrue(responsibleOfficeWebsite > responsibleOfficeLine);
+    }
+
+    @Test
+    void xmlToFoOmitsProjectedBuildingsSubsectionWhenNoPlannedBuildingJoinExists() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-projected-objects-no-planned-building-join.xml"),
+                new SampleAvOptions(true, true, false, true, true, true, true, false, false, true, true, true)
+        );
+        Path outputDirectory = tempDir.resolve("out-projected-objects-no-planned-building-join");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        int projectedObjectsStart = fo.indexOf("Projektierte Objekte");
+        assertTrue(projectedObjectsStart >= 0);
+        assertTrue(fo.contains("Projektierte Grundstücke"));
+        assertEquals(-1, fo.indexOf("Projektierte Gebäude und Bauten", projectedObjectsStart));
+        assertTrue(fo.contains("Zuständige Stelle"));
+    }
+
+    @Test
+    void xmlToFoRendersProjectedObjectsSectionWhenMutationMissingButPlannedBuildingJoinExists() throws IOException {
+        PdfConverter converter = new DefaultPdfConverter();
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-projected-objects-buildings-only.xml"),
+                new SampleAvOptions(true, true, true, true, true, true, true, false, false, true, true, false)
+        );
+        Path outputDirectory = tempDir.resolve("out-projected-objects-buildings-only");
+
+        ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
+
+        String fo = Files.readString(result.outputFile(), StandardCharsets.UTF_8);
+        assertTrue(fo.contains("Projektierte Objekte"));
+        assertTrue(fo.contains("Projektierte Gebäude und Bauten"));
+        assertTrue(fo.contains("Geplante Testfläche"));
+        assertTrue(fo.contains("500 m²"));
+        assertFalse(fo.contains("150 m²"));
+        assertFalse(fo.contains("Projektierte Grundstücke"));
+        assertEquals(3, countOccurrences(fo, "break-before=\"page\""));
     }
 
     @Test
@@ -334,7 +423,10 @@ class DefaultPdfConverterTest {
     @Test
     void xmlToFoOmitsProjectedObjectsSectionWhenMutationMissing() throws IOException {
         PdfConverter converter = new DefaultPdfConverter();
-        Path xmlFile = writeSampleAvXml(tempDir.resolve("input-no-projected-objects.xml"), true, true);
+        Path xmlFile = writeSampleAvXml(
+                tempDir.resolve("input-no-projected-objects.xml"),
+                new SampleAvOptions(true, true, false, true, true, true, true, false, false, true, true, false)
+        );
         Path outputDirectory = tempDir.resolve("out-no-projected-objects");
 
         ConversionResult result = converter.xmlToFo(xmlFile, outputDirectory, Locale.GERMAN);
@@ -785,6 +877,7 @@ class DefaultPdfConverterTest {
 
         return """
                       <ns2:LandCover>
+                        %1$s
                         <ns2:Type>
                           <ns2:Code>buildings</ns2:Code>
                           <ns2:Text>
@@ -799,6 +892,7 @@ class DefaultPdfConverterTest {
                         <ns2:EGID>420760</ns2:EGID>
                       </ns2:LandCover>
                       <ns2:LandCover>
+                        %2$s
                         <ns2:Type>
                           <ns2:Code>hard_surfaced.roads_tracks</ns2:Code>
                           <ns2:Text>
@@ -812,6 +906,7 @@ class DefaultPdfConverterTest {
                         <ns2:AreaShare>30</ns2:AreaShare>
                       </ns2:LandCover>
                       <ns2:LandCover>
+                        %3$s
                         <ns2:Type>
                           <ns2:Code>vegetated.garden</ns2:Code>
                           <ns2:Text>
@@ -824,7 +919,27 @@ class DefaultPdfConverterTest {
                         <ns2:Area>7470</ns2:Area>
                         <ns2:AreaShare>7470</ns2:AreaShare>
                       </ns2:LandCover>
-                """;
+                      <ns2:LandCover>
+                        %4$s
+                        <ns2:Type>
+                          <ns2:Code>buildings</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>Geplante Testfläche</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                        <ns2:Area>500</ns2:Area>
+                        <ns2:AreaShare>500</ns2:AreaShare>
+                        <ns2:EGID>420760</ns2:EGID>
+                      </ns2:LandCover>
+                """.formatted(
+                buildObjectStatusXml(options, true),
+                buildObjectStatusXml(options, true),
+                buildObjectStatusXml(options, true),
+                buildObjectStatusXml(options, false)
+        );
     }
 
     private String buildSingleObjectsXml(SampleAvOptions options) {
@@ -834,6 +949,7 @@ class DefaultPdfConverterTest {
 
         StringBuilder xml = new StringBuilder("""
                       <ns2:SingleObject>
+                        %1$s
                         <ns2:Type>
                           <ns2:Code>underground_structure</ns2:Code>
                           <ns2:Text>
@@ -846,6 +962,7 @@ class DefaultPdfConverterTest {
                         <ns2:EGID>2355661</ns2:EGID>
                       </ns2:SingleObject>
                       <ns2:SingleObject>
+                        %2$s
                         <ns2:Type>
                           <ns2:Code>wall</ns2:Code>
                           <ns2:Text>
@@ -856,11 +973,15 @@ class DefaultPdfConverterTest {
                           </ns2:Text>
                         </ns2:Type>
                       </ns2:SingleObject>
-                """);
+                """.formatted(
+                buildObjectStatusXml(options, true),
+                buildObjectStatusXml(options, true)
+        ));
 
         if (options.includeBuildingWithMultipleEntrances()) {
             xml.append("""
                       <ns2:SingleObject>
+                        %1$s
                         <ns2:Type>
                           <ns2:Code>shelter</ns2:Code>
                           <ns2:Text>
@@ -872,12 +993,30 @@ class DefaultPdfConverterTest {
                         </ns2:Type>
                         <ns2:EGID>2355731</ns2:EGID>
                       </ns2:SingleObject>
-                    """);
+                      <ns2:SingleObject>
+                        %2$s
+                        <ns2:Type>
+                          <ns2:Code>shelter</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>Unterstand geplant</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Type>
+                        <ns2:AreaShare>333</ns2:AreaShare>
+                        <ns2:EGID>2355731</ns2:EGID>
+                      </ns2:SingleObject>
+                    """.formatted(
+                    buildObjectStatusXml(options, true),
+                    buildObjectStatusXml(options, false)
+            ));
         }
 
         if (options.includeAmbiguousBuildingMatch()) {
             xml.append("""
                       <ns2:SingleObject>
+                        %s
                         <ns2:Type>
                           <ns2:Code>other_portion_of_building</ns2:Code>
                           <ns2:Text>
@@ -889,10 +1028,28 @@ class DefaultPdfConverterTest {
                         </ns2:Type>
                         <ns2:EGID>420760</ns2:EGID>
                       </ns2:SingleObject>
-                    """);
+                    """.formatted(buildObjectStatusXml(options, true)));
         }
 
         return xml.toString();
+    }
+
+    private String buildObjectStatusXml(SampleAvOptions options, boolean isRealStatus) {
+        boolean useRealStatus = isRealStatus && !options.usePlannedObjectStatusOnly();
+        String statusCode = useRealStatus ? "actual" : "planned";
+        String statusText = useRealStatus ? "real" : "projektiert";
+
+        return """
+                        <ns2:Objectstatus>
+                          <ns2:Code>%s</ns2:Code>
+                          <ns2:Text>
+                            <ns2:LocalisedText>
+                              <ns2:Language>de</ns2:Language>
+                              <ns2:Text>%s</ns2:Text>
+                            </ns2:LocalisedText>
+                          </ns2:Text>
+                        </ns2:Objectstatus>
+                """.formatted(statusCode, statusText);
     }
 
     private String buildResponsibleOfficeXml(SampleAvOptions options) {
@@ -1011,8 +1168,28 @@ class DefaultPdfConverterTest {
             boolean includeAmbiguousBuildingMatch,
             boolean includeLandRegisterOffice,
             boolean includeLandRegisterOfficeWebsite,
-            boolean includeMutations
+            boolean includeMutations,
+            boolean usePlannedObjectStatusOnly
     ) {
+        private SampleAvOptions(
+                boolean includeMunicipalityLogo,
+                boolean includePropertyInfoWebsite,
+                boolean includeLandCovers,
+                boolean includeBuildings,
+                boolean includeResponsibleOffice,
+                boolean includeResponsibleOfficeWebsite,
+                boolean includeBuildingWithoutEntrance,
+                boolean includeBuildingWithMultipleEntrances,
+                boolean includeAmbiguousBuildingMatch,
+                boolean includeLandRegisterOffice,
+                boolean includeLandRegisterOfficeWebsite,
+                boolean includeMutations
+        ) {
+            this(includeMunicipalityLogo, includePropertyInfoWebsite, includeLandCovers, includeBuildings,
+                    includeResponsibleOffice, includeResponsibleOfficeWebsite, includeBuildingWithoutEntrance,
+                    includeBuildingWithMultipleEntrances, includeAmbiguousBuildingMatch, includeLandRegisterOffice,
+                    includeLandRegisterOfficeWebsite, includeMutations, false);
+        }
     }
 
     private String tinyPngBase64() throws IOException {
